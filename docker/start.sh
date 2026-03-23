@@ -1,0 +1,31 @@
+#!/bin/sh
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Sales-Spy API — Starting up"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Run database migrations automatically on every deploy
+echo "→ Running database migrations..."
+php artisan migrate --force
+
+# Cache config and routes for performance
+echo "→ Caching configuration..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Set correct permissions on storage
+echo "→ Setting storage permissions..."
+chmod -R 775 /var/www/html/storage
+chmod -R 775 /var/www/html/bootstrap/cache
+
+# Start PHP-FPM in the background
+echo "→ Starting PHP-FPM..."
+php-fpm -D
+
+# Start Nginx in the foreground
+echo "→ Starting Nginx..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  API is live on port 10000"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+nginx -g 'daemon off;'
