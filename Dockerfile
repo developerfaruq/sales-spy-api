@@ -1,9 +1,7 @@
 # Use PHP 8.3 with FPM on Alpine Linux
-# Alpine is a minimal Linux - makes the image small and fast to deploy
 FROM php:8.3-fpm-alpine
 
 # Install system dependencies
-# These are Linux packages needed to compile PHP extensions
 RUN apk add --no-cache \
     nginx \
     git \
@@ -27,10 +25,17 @@ RUN docker-php-ext-install \
     gd \
     zip
 
+# Install build dependencies required for PECL (Redis)
+RUN apk add --no-cache --virtual .build-deps \
+    $PHPIZE_DEPS \
+    linux-headers
+
 # Install the Redis PHP extension
-# This lets PHP talk to Redis directly (faster than predis)
 RUN pecl install redis \
     && docker-php-ext-enable redis
+
+# Remove build dependencies to keep image small
+RUN apk del .build-deps
 
 # Install Composer (PHP's package manager)
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -51,7 +56,7 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Tell Docker this container listens on port 10000
+# Expose port (Railway will map this automatically)
 EXPOSE 10000
 
 # Run the startup script when the container launches
