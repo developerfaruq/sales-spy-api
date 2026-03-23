@@ -12,7 +12,8 @@ RUN apk add --no-cache \
     libzip-dev \
     postgresql-dev \
     oniguruma-dev \
-    supervisor
+    supervisor \
+    gettext
 
 # Install PHP extensions that Sales-Spy needs
 RUN docker-php-ext-install \
@@ -37,27 +38,25 @@ RUN pecl install redis \
 # Remove build dependencies to keep image small
 RUN apk del .build-deps
 
-# Install Composer (PHP's package manager)
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /var/www/html
 
-# Copy your entire project into the container
+# Copy project
 COPY . .
 
-# Install PHP packages (production only, no dev tools)
+# Install PHP packages
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Copy your nginx config into the right place
-COPY docker/nginx.conf /etc/nginx/nginx.conf
+# Copy nginx config
+COPY docker/nginx.conf /etc/nginx/nginx.conf.template
 
-# Copy and make executable your startup script
+# Copy and make executable startup script
 COPY docker/start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Expose port (Railway will map this automatically)
 EXPOSE 10000
 
-# Run the startup script when the container launches
 CMD ["/start.sh"]

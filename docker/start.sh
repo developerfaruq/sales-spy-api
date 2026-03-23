@@ -4,7 +4,14 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  Sales-Spy API — Starting up"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Run database migrations automatically on every deploy
+# Use Railway's PORT variable, default to 10000 if not set
+export PORT="${PORT:-10000}"
+echo "→ Using port: $PORT"
+
+# Replace ${PORT} in the nginx template with the actual port value
+envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+
+# Run database migrations
 echo "→ Running database migrations..."
 php artisan migrate --force
 
@@ -26,6 +33,6 @@ php-fpm -D
 # Start Nginx in the foreground
 echo "→ Starting Nginx..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  API is live on port 10000"
+echo "  API is live on port $PORT"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 nginx -g 'daemon off;'
