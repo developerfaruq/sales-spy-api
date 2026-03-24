@@ -16,15 +16,8 @@ php artisan config:clear
 php artisan cache:clear
 # Run database migrations
 echo "→ Running database migrations..."
-echo "→ Running migrations..."
-php artisan migrate --force
-
-echo "→ Seeding (only if roles table exists)..."
-php artisan tinker --execute="
-if (Schema::hasTable('roles')) {
-    Artisan::call('db:seed', ['--force' => true]);
-}
-"
+php artisan migrat --force
+php artisan db:seed --force
 
 
 
