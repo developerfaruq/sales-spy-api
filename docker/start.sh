@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Sales-Spy API — Starting up"
@@ -13,7 +14,8 @@ envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
 # Run database migrations
 echo "→ Running database migrations..."
-php artisan migrate:fresh --seed --force
+php artisan migrate:fresh --force
+php artisan db:seed --force
 
 
 
