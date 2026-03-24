@@ -11,7 +11,7 @@ use function Knuckles\Scribe\Config\removeStrategies;
 
 return [
     // The HTML <title> for the generated documentation.
-    'title' => config('app.name').' API Documentation',
+    'title' => config('app.name') . ' API Documentation',
 
     // A short description of your API. Will be included in the docs webpage, Postman collection and OpenAPI spec.
     'description' => '',
@@ -104,31 +104,14 @@ return [
 
     // How is your API authenticated? This information will be used in the displayed docs, generated examples and response calls.
     'auth' => [
-        // Set this to true if ANY endpoints in your API use authentication.
-        'enabled' => false,
-
-        // Set this to true if your API should be authenticated by default. If so, you must also set `enabled` (above) to true.
-        // You can then use @unauthenticated or @authenticated on individual endpoints to change their status from the default.
+        'enabled' => true,
         'default' => false,
-
-        // Where is the auth value meant to be sent in a request?
-        'in' => AuthIn::BEARER->value,
-
-        // The name of the auth parameter (e.g. token, key, apiKey) or header (e.g. Authorization, Api-Key).
-        'name' => 'key',
-
-        // The value of the parameter to be used by Scribe to authenticate response calls.
-        // This will NOT be included in the generated documentation. If empty, Scribe will use a random value.
-        'use_value' => env('SCRIBE_AUTH_KEY'),
-
-        // Placeholder your users will see for the auth parameter in the example requests.
-        // Set this to null if you want Scribe to use a random value as placeholder instead.
-        'placeholder' => '{YOUR_AUTH_KEY}',
-
-        // Any extra authentication-related info for your users. Markdown and HTML are supported.
-        'extra_info' => 'You can retrieve your token by visiting your dashboard and clicking <b>Generate API token</b>.',
+        'in' => 'bearer',
+        'name' => 'Authorization',
+        'use_value' => env('SCRIBE_AUTH_KEY', 'YOUR_TOKEN_HERE'),
+        'placeholder' => '{YOUR_AUTH_TOKEN}',
+        'extra_info' => 'Get your token from POST /api/v1/auth/register or POST /api/v1/auth/login. Send it as a Bearer token in every protected request: Authorization: Bearer {token}',
     ],
-
     // Example requests for each endpoint will be shown in each of these languages.
     // Supported options are: bash, javascript, php, python
     // To add a language of your own, see https://scribe.knuckles.wtf/laravel/advanced/example-requests

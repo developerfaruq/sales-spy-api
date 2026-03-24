@@ -15,6 +15,9 @@ envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 echo "→ Running database migrations..."
 php artisan migrate --force
 
+echo "→ Seeding roles..."
+php artisan db:seed --force
+
 # Cache config and routes for performance
 echo "→ Caching configuration..."
 php artisan config:cache

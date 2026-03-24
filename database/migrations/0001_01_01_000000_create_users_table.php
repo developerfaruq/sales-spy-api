@@ -17,6 +17,13 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('profile_image_url')->nullable();
+            $table->string('profile_image_public_id')->nullable();
+            $table->enum('plan', ['free', 'basic', 'pro', 'enterprise'])->default('free');
+            $table->integer('credits_balance')->default(500); // Free plan starter credits
+            $table->integer('credits_monthly_quota')->default(500);
+            //account status
+            $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
         });

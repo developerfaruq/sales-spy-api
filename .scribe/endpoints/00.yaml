@@ -1,46 +1,6 @@
-name: Endpoints
+name: General
 description: ''
 endpoints:
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/v1/user
-    metadata:
-      custom: []
-      groupName: Endpoints
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: ''
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 401
-        content: '{"message":"Unauthenticated."}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-        description: null
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
   -
     custom: []
     httpMethods:
@@ -48,12 +8,14 @@ endpoints:
     uri: api/v1/health
     metadata:
       custom: []
-      groupName: Endpoints
+      groupName: General
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: ''
-      description: ''
+      title: 'Health Check'
+      description: |-
+        Check if the API is online. No authentication required.
+        Use this to verify the server is reachable before making other calls.
       authenticated: false
       deprecated: false
     headers:
@@ -70,12 +32,17 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"success":true,"message":"Sales-Spy API v1 is live","data":{"version":"1.0.0","environment":"local"}}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-        description: null
+        content: |-
+          {
+            "success": true,
+            "message": "Sales-Spy API v1 is live",
+            "data": {
+              "version": "1.0.0",
+              "environment": "production"
+            }
+          }
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
