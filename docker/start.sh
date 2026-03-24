@@ -12,10 +12,19 @@ echo "→ Using port: $PORT"
 # Replace ${PORT} in the nginx template with the actual port value
 envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
+php artisan config:clear
+php artisan cache:clear
 # Run database migrations
 echo "→ Running database migrations..."
-php artisan migrate:fresh --force
-php artisan db:seed --force
+echo "→ Running migrations..."
+php artisan migrate --force
+
+echo "→ Seeding (only if roles table exists)..."
+php artisan tinker --execute="
+if (Schema::hasTable('roles')) {
+    Artisan::call('db:seed', ['--force' => true]);
+}
+"
 
 
 
