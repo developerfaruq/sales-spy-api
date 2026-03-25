@@ -55,6 +55,7 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf.template
 
 # Copy and make executable startup script
 COPY docker/start.sh /start.sh
+RUN sed -i 's/\r//' /start.sh
 RUN chmod +x /start.sh
 
 EXPOSE 10000
