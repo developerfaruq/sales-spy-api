@@ -20,8 +20,10 @@ class AuthService
             'email'    => $data['email'],
             'password' => $data['password'], // Auto-hashed by model cast
         ]);
+        $user->refresh();
 
         // Assign the default 'user' role
+
         $user->assignRole('user');
 
         return $user;
@@ -81,6 +83,7 @@ class AuthService
                 'profile_image_url' => $socialiteUser->getAvatar(),
                 'email_verified_at' => now(), // OAuth emails are pre-verified
             ]);
+
 
             $user->assignRole('user');
         }
