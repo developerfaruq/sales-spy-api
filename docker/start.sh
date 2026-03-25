@@ -16,7 +16,7 @@ php artisan config:clear
 php artisan cache:clear
 # Run database migrations
 echo "→ Running database migrations..."
-php artisan migrat:fresh --force
+php artisan migrate --force
 php artisan db:seed --force
 
 
