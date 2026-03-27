@@ -13,6 +13,8 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use App\Models\OAuthProvider;
+use App\Models\NotificationPreference;
+use App\Models\UserActivity;
 
 #[Fillable([
     'name',
@@ -53,6 +55,15 @@ class User extends Authenticatable
         return $this->hasMany(OAuthProvider::class);
     }
 
+    public function notificationPreferences()
+    {
+        return $this->hasOne(NotificationPreference::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(UserActivity::class)->latest('created_at');
+    }
     //  Helper Methods 
 
 

@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\User\ProfileController;
 
 
 
@@ -62,7 +63,27 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me',      [AuthController::class, 'me']);
 
-        // Phase 3 routes will go here
-        // Phase 9 routes will go here
+
+        // ─── Profile & Settings ───────────────────────────────────
+        Route::prefix('user')->group(function () {
+
+            // Profile
+            Route::get('/profile',            [ProfileController::class, 'show']);
+            Route::patch('/profile',          [ProfileController::class, 'update']);
+            Route::post('/profile/avatar',    [ProfileController::class, 'uploadAvatar']);
+            Route::delete('/profile/avatar',  [ProfileController::class, 'deleteAvatar']);
+
+            // Password
+            Route::put('/password',           [ProfileController::class, 'changePassword']);
+
+            // Notifications
+            Route::get('/notifications/preferences',  [ProfileController::class, 'getNotificationPreferences']);
+            Route::put('/notifications/preferences',  [ProfileController::class, 'updateNotificationPreferences']);
+
+            // Sessions
+            Route::get('/sessions',           [ProfileController::class, 'sessions']);
+            Route::delete('/sessions/{sessionId}', [ProfileController::class, 'revokeSession']);
+            Route::delete('/sessions',        [ProfileController::class, 'revokeAllSessions']);
+        });
     });
 });

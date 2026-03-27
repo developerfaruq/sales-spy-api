@@ -5,11 +5,15 @@ namespace App\Services;
 use App\Enums\OAuthProviderEnum;
 use App\Models\OAuthProvider;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
 
 class AuthService
 {
+    public function __construct(
+        protected ActivityService $activityService
+    ) {}
     /**
      * Register a new user with email and password.
      */
@@ -85,6 +89,7 @@ class AuthService
             ]);
 
 
+            $user->refresh();
             $user->assignRole('user');
         }
 
@@ -111,5 +116,18 @@ class AuthService
         $user->tokens()->delete();
 
         return $user->createToken('auth-token')->plainTextToken;
+    }
+
+    /**
+     * Log a login activity for the user.
+     */
+    public function logLogin(User $user, Request $request): void
+    {
+        $this->activityService->log(
+            userId: $user->id,
+            type: 'login',
+            description: 'Signed in to account',
+            request: $request
+        );
     }
 }
