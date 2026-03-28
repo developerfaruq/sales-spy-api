@@ -91,9 +91,6 @@
                                                                                 <li class="tocify-item level-2" data-unique="authentication-POSTapi-v1-auth-logout">
                                 <a href="#authentication-POSTapi-v1-auth-logout">Logout</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="authentication-GETapi-v1-auth-me">
-                                <a href="#authentication-GETapi-v1-auth-me">Get authenticated user</a>
-                            </li>
                                                                         </ul>
                             </ul>
                     <ul id="tocify-header-general" class="tocify-header">
@@ -140,6 +137,9 @@
                                                     <li class="tocify-item level-2" data-unique="profile-GETapi-v1-user-profile">
                                 <a href="#profile-GETapi-v1-user-profile">Get the authenticated user's profile.</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="profile-PATCHapi-v1-user-profile">
+                                <a href="#profile-PATCHapi-v1-user-profile">Update profile</a>
+                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="profile-POSTapi-v1-user-profile-avatar">
                                 <a href="#profile-POSTapi-v1-user-profile-avatar">Upload a new avatar image.</a>
                             </li>
@@ -176,7 +176,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: March 27, 2026</li>
+        <li>Last updated: March 28, 2026</li>
     </ul>
 </div>
 
@@ -811,163 +811,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="POSTapi-v1-auth-logout"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                        </form>
-
-                    <h2 id="authentication-GETapi-v1-auth-me">Get authenticated user</h2>
-
-<p>
-<small class="badge badge-darkred">requires authentication</small>
-</p>
-
-<p>Returns the full profile of the currently authenticated user.
-Use this after login to populate the dashboard with user data.</p>
-
-<span id="example-requests-GETapi-v1-auth-me">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost:8000/api/v1/auth/me" \
-    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json"</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8000/api/v1/auth/me"
-);
-
-const headers = {
-    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-};
-
-
-fetch(url, {
-    method: "GET",
-    headers,
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-GETapi-v1-auth-me">
-            <blockquote>
-            <p>Example response (200):</p>
-        </blockquote>
-                <pre>
-
-<code class="language-json" style="max-height: 300px;">{
-    &quot;success&quot;: true,
-    &quot;message&quot;: &quot;User retrieved successfully&quot;,
-    &quot;data&quot;: {
-        &quot;id&quot;: 1,
-        &quot;name&quot;: &quot;John Doe&quot;,
-        &quot;email&quot;: &quot;john@example.com&quot;,
-        &quot;plan&quot;: &quot;free&quot;,
-        &quot;credits_balance&quot;: 50,
-        &quot;profile_image&quot;: null,
-        &quot;email_verified&quot;: false,
-        &quot;is_active&quot;: true,
-        &quot;created_at&quot;: &quot;2026-03-24T10:00:00.000000Z&quot;
-    }
-}</code>
- </pre>
-            <blockquote>
-            <p>Example response (401):</p>
-        </blockquote>
-                <pre>
-
-<code class="language-json" style="max-height: 300px;">{
-    &quot;message&quot;: &quot;Unauthenticated.&quot;
-}</code>
- </pre>
-    </span>
-<span id="execution-results-GETapi-v1-auth-me" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-GETapi-v1-auth-me"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-GETapi-v1-auth-me"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-GETapi-v1-auth-me" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-GETapi-v1-auth-me">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-GETapi-v1-auth-me" data-method="GET"
-      data-path="api/v1/auth/me"
-      data-authed="1"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-auth-me', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-GETapi-v1-auth-me"
-                    onclick="tryItOut('GETapi-v1-auth-me');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-GETapi-v1-auth-me"
-                    onclick="cancelTryOut('GETapi-v1-auth-me');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-GETapi-v1-auth-me"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-green">GET</small>
-            <b><code>api/v1/auth/me</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-auth-me"
-               value="Bearer {YOUR_AUTH_TOKEN}"
-               data-component="header">
-    <br>
-<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="GETapi-v1-auth-me"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="GETapi-v1-auth-me"
                value="application/json"
                data-component="header">
     <br>
@@ -2050,6 +1893,188 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                         </form>
 
+                    <h2 id="profile-PATCHapi-v1-user-profile">Update profile</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Update your name and/or email address. Only send the fields you want to change.</p>
+
+<span id="example-requests-PATCHapi-v1-user-profile">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PATCH \
+    "http://localhost:8000/api/v1/user/profile" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"name\": \"John Doe\",
+    \"email\": \"john@example.com\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/user/profile"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "name": "John Doe",
+    "email": "john@example.com"
+};
+
+fetch(url, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PATCHapi-v1-user-profile">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Profile updated successfully&quot;,
+    &quot;data&quot;: {
+        &quot;id&quot;: 1,
+        &quot;name&quot;: &quot;John Doe&quot;,
+        &quot;email&quot;: &quot;john@example.com&quot;,
+        &quot;plan&quot;: &quot;free&quot;,
+        &quot;credits_balance&quot;: 500,
+        &quot;profile_image&quot;: null,
+        &quot;email_verified&quot;: true,
+        &quot;is_active&quot;: true,
+        &quot;created_at&quot;: &quot;2026-03-01T00:00:00.000000Z&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PATCHapi-v1-user-profile" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PATCHapi-v1-user-profile"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PATCHapi-v1-user-profile"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PATCHapi-v1-user-profile" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PATCHapi-v1-user-profile">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PATCHapi-v1-user-profile" data-method="PATCH"
+      data-path="api/v1/user/profile"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PATCHapi-v1-user-profile', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-PATCHapi-v1-user-profile"
+                    onclick="tryItOut('PATCHapi-v1-user-profile');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-PATCHapi-v1-user-profile"
+                    onclick="cancelTryOut('PATCHapi-v1-user-profile');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-PATCHapi-v1-user-profile"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-purple">PATCH</small>
+            <b><code>api/v1/user/profile</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PATCHapi-v1-user-profile"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PATCHapi-v1-user-profile"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PATCHapi-v1-user-profile"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="name"                data-endpoint="PATCHapi-v1-user-profile"
+               value="John Doe"
+               data-component="body">
+    <br>
+<p>optional Your display name. Example: <code>John Doe</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="email"                data-endpoint="PATCHapi-v1-user-profile"
+               value="john@example.com"
+               data-component="body">
+    <br>
+<p>optional A valid unique email address. Example: <code>john@example.com</code></p>
+        </div>
+        </form>
+
                     <h2 id="profile-POSTapi-v1-user-profile-avatar">Upload a new avatar image.</h2>
 
 <p>
@@ -2068,7 +2093,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
-    --form "avatar=@/tmp/phpJwaiKy" </code></pre></div>
+    --form "avatar=@/tmp/phpTjGkho" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -2202,7 +2227,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The image file. Max 2MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/phpJwaiKy</code></p>
+<p>The image file. Max 2MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/phpTjGkho</code></p>
         </div>
         </form>
 

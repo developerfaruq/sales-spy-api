@@ -54,18 +54,30 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the authenticated user's profile.
+     * Update profile
+     *
+     * Update your name and/or email address. Only send the fields you want to change.
      *
      * @authenticated
      * @group Profile
      *
-     * @bodyParam name string optional The user's display name. Example: John Doe
-     * @bodyParam email string optional A valid unique email. Example: john@example.com
+     * @bodyParam name string optional Your display name. Example: John Doe
+     * @bodyParam email string optional A valid unique email address. Example: john@example.com
      *
      * @response 200 {
      *   "success": true,
      *   "message": "Profile updated successfully",
-     *   "data": { "id": 1, "name": "John Doe", "email": "john@example.com" }
+     *   "data": {
+     *     "id": 1,
+     *     "name": "John Doe",
+     *     "email": "john@example.com",
+     *     "plan": "free",
+     *     "credits_balance": 500,
+     *     "profile_image": null,
+     *     "email_verified": true,
+     *     "is_active": true,
+     *     "created_at": "2026-03-01T00:00:00.000000Z"
+     *   }
      * }
      */
     public function update(UpdateProfileRequest $request): JsonResponse

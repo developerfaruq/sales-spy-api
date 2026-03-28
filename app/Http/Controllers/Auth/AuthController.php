@@ -208,25 +208,25 @@ class AuthController extends Controller
      * }
      */
 
-    public function me(Request $request): JsonResponse
-    {
-        $user = $request->user();
+    // public function me(Request $request): JsonResponse
+    // {
+    //     $user = $request->user();
 
-        return $this->successResponse(
-            data: [
-                'id'              => $user->id,
-                'name'            => $user->name,
-                'email'           => $user->email,
-                'plan'            => $user->plan,
-                'credits_balance' => $user->credits_balance,
-                'profile_image'   => $user->profile_image_url,
-                'email_verified'  => !is_null($user->email_verified_at),
-                'is_active'       => $user->is_active,
-                'created_at'      => $user->created_at,
-            ],
-            message: 'User retrieved successfully'
-        );
-    }
+    //     return $this->successResponse(
+    //         data: [
+    //             'id'              => $user->id,
+    //             'name'            => $user->name,
+    //             'email'           => $user->email,
+    //             'plan'            => $user->plan,
+    //             'credits_balance' => $user->credits_balance,
+    //             'profile_image'   => $user->profile_image_url,
+    //             'email_verified'  => !is_null($user->email_verified_at),
+    //             'is_active'       => $user->is_active,
+    //             'created_at'      => $user->created_at,
+    //         ],
+    //         message: 'User retrieved successfully'
+    //     );
+    // }
 
     // OAuth
     //GET /api/v1/auth/{provider}/redirect

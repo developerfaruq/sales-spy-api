@@ -25,13 +25,14 @@ class UpdateProfileRequest extends FormRequest
      */
     public function rules(): array
     {
+        $userId = $this->user()?->id;
         return [
             'name'  => ['sometimes', 'string', 'min:2', 'max:100'],
             'email' => [
                 'sometimes',
                 'email',
                 // Unique except for the current user's own email
-                Rule::unique('users', 'email')->ignore($this->user()->id),
+                Rule::unique('users', 'email')->ignore($userId),
             ],
         ];
     }

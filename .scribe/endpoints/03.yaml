@@ -60,6 +60,86 @@ endpoints:
   -
     custom: []
     httpMethods:
+      - PATCH
+    uri: api/v1/user/profile
+    metadata:
+      custom: []
+      groupName: Profile
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update profile'
+      description: 'Update your name and/or email address. Only send the fields you want to change.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'optional Your display name.'
+        required: false
+        example: 'John Doe'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'optional A valid unique email address.'
+        required: false
+        example: john@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'John Doe'
+      email: john@example.com
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Profile updated successfully",
+            "data": {
+              "id": 1,
+              "name": "John Doe",
+              "email": "john@example.com",
+              "plan": "free",
+              "credits_balance": 500,
+              "profile_image": null,
+              "email_verified": true,
+              "is_active": true,
+              "created_at": "2026-03-01T00:00:00.000000Z"
+            }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
       - POST
     uri: api/v1/user/profile/avatar
     metadata:

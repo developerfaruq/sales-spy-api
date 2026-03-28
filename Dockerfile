@@ -66,9 +66,6 @@ RUN printf '#!/bin/sh\n\
     echo "→ Seeding roles..."\n\
     php artisan db:seed --force\n\
     \n\
-    echo "→ Generating API docs..."\n\
-    php artisan scribe:generate\n\
-    \n\
     echo "→ Caching configuration..."\n\
     php artisan config:cache\n\
     php artisan route:cache\n\
