@@ -185,14 +185,13 @@
     <div class="content">
         <h1 id="introduction">Introduction</h1>
 <p>Welcome to the <strong>Sales-Spy API</strong> — e-commerce lead intelligence for serious sales teams.</p>
-<p>Base URL: <code>https://sales-spy-api.onrender.com/</code></p>
 <hr />
 <h2 id="response-format">Response Format</h2>
 <p>Every endpoint returns the same JSON structure:</p>
 <p><strong>Success:</strong></p>
 <pre><code class="language-json">{
   "success": true,
-  "message": "Human readable message",
+  "message": "readable message",
   "data": { ... }
 }</code></pre>
 <p><strong>Error:</strong></p>
@@ -2087,7 +2086,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
-    --form "avatar=@/tmp/phpn2sDik" </code></pre></div>
+    --form "avatar=@/tmp/phpwWTDAu" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -2221,7 +2220,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The image file. Max 2MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/phpn2sDik</code></p>
+<p>The image file. Max 2MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/phpwWTDAu</code></p>
         </div>
         </form>
 
