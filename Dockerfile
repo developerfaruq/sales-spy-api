@@ -61,7 +61,7 @@ RUN printf '#!/bin/sh\n\
     php artisan optimize:clear\n\
     \n\
     echo "→ Running database migrations..."\n\
-    php artisan migrate --force\n\
+    php artisan migrate:fresh --force\n\
     \n\
     echo "→ Seeding roles..."\n\
     php artisan db:seed --force\n\

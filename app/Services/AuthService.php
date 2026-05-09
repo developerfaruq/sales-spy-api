@@ -12,7 +12,8 @@ use Laravel\Socialite\Contracts\User as SocialiteUser;
 class AuthService
 {
     public function __construct(
-        protected ActivityService $activityService
+        protected ActivityService $activityService,
+        protected SubscriptionService $subscriptionService,
     ) {}
     /**
      * Register a new user with email and password.
@@ -22,7 +23,7 @@ class AuthService
         $user = User::create([
             'name'     => $data['name'],
             'email'    => $data['email'],
-            'password' => $data['password'], // Auto-hashed by model cast
+            'password' => $data['password'],
         ]);
         $user->refresh();
 
@@ -30,6 +31,7 @@ class AuthService
 
         $user->assignRole('user');
 
+        $this->subscriptionService->assignFreePlan($user);
         return $user;
     }
 

@@ -22,7 +22,7 @@ use App\Models\UserActivity;
     'password',
     'profile_image_url',
     'profile_image_public_id',
-    'plan',
+
     'credits_balance',
     'credits_monthly_quota',
     'is_active',
@@ -75,10 +75,42 @@ class User extends Authenticatable
     }
 
 
+
     //Check if user is on a paid plan
 
     public function isPaidUser(): bool
     {
-        return in_array($this->plan, ['basic', 'pro', 'enterprise']);
+        $sub = $this->activeSubscription;
+        return $sub && !$sub->plan->isFree();
+    }
+
+    // Add this relationship
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    // Add this relationship — gets only the current active subscription
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+            ->whereIn('status', ['active', 'trial', 'cancelled'])
+            ->where('current_period_end', '>', now())
+            ->latest();
+    }
+
+
+
+
+    // Get the user's current plan name
+    public function currentPlanSlug(): string
+    {
+        return $this->activeSubscription?->plan?->slug ?? 'free';
+    }
+
+    // Get the user's current monthly quota
+    public function currentMonthlyQuota(): int
+    {
+        return $this->activeSubscription?->plan?->monthly_quota ?? 50;
     }
 }

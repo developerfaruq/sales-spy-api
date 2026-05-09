@@ -1,58 +1,162 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚀 Sales-Spy API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sales-Spy is a scalable backend API designed to power sales intelligence platforms. It provides a structured system for managing users, tracking activities, handling authentication, and enabling data-driven insights for modern applications.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🧠 Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Sales-Spy focuses on delivering a clean and modular architecture for building SaaS products in the sales and analytics space. It abstracts core backend responsibilities such as authentication, user management, and activity tracking into reusable services.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The API is designed with scalability, performance, and developer experience in mind.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## ⚡ Core Capabilities
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🔐 Authentication System
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- Secure user registration and login
+- Token-based authentication
+- OAuth integration (e.g., Google, GitHub)
+- Session and device management
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 👤 User Management
 
-```bash
-composer require laravel/boost --dev
+- Profile creation and updates
+- Avatar upload and deletion (Cloudinary integration)
+- Password change with validation
+- Account status management
 
-php artisan boost:install
-```
+---
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 🔔 Notification Preferences
 
-## Contributing
+- Per-user notification settings
+- Default preference initialization
+- Flexible update system for user-specific configurations
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+### 🧠 Activity Tracking
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Logs user actions across the system
+- Tracks events like profile updates, login activity, etc.
+- Useful for auditing and analytics
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 🛡️ Roles & Permissions
 
-## License
+- Role-based access control using a permission system
+- Supports multiple roles (e.g., admin, user)
+- Easily extendable for complex authorization logic
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+### 📡 RESTful API Design
+
+- Follows REST principles
+- Structured endpoints (`/api/v1/...`)
+- Consistent request and response formats
+- Designed for frontend and third-party integrations
+
+---
+
+### 📄 API Documentation
+
+- Automatically generated using Scribe
+- Includes request/response examples
+- Helps developers integrate quickly
+
+---
+
+## 🏗️ Architecture
+
+Sales-Spy follows a **Service Layer Architecture** to ensure clean separation of concerns:
+
+- **Controllers** → Handle HTTP requests and responses
+- **Services** → Contain business logic
+- **Models** → Manage database interactions
+
+This structure improves:
+
+- Code maintainability
+- Testability
+- Scalability
+
+---
+
+## 🧩 Key Components
+
+### Services
+
+Encapsulate business logic such as:
+
+- Profile updates
+- Activity logging
+- File uploads
+
+---
+
+### Models
+
+Represent database entities like:
+
+- Users
+- Roles & Permissions
+- Notification Preferences
+
+---
+
+### Integrations
+
+- Cloudinary (file storage)
+- PostgreSQL (database via Neon)
+- Redis (optional caching)
+
+---
+
+## 🎯 Use Cases
+
+Sales-Spy API can be used to build:
+
+- SaaS dashboards
+- Sales analytics platforms
+- CRM systems
+- Competitor tracking tools
+- Internal business intelligence tools
+
+---
+
+## 🚀 Design Philosophy
+
+- **Modular** → Easy to extend and maintain
+- **Secure** → Built with authentication and validation best practices
+- **Scalable** → Ready for production workloads
+- **Developer-friendly** → Clean structure and auto-generated docs
+
+---
+
+## 🔮 Future Vision
+
+- Advanced analytics engine
+- AI-powered insights
+- Subscription and billing system
+- Real-time event tracking
+- Team collaboration features
+
+---
+
+## 👨‍💻 Author
+
+**Faruq (DEVFARUQ)**
+Backend Engineer focused on building scalable APIs and SaaS platforms.
+
+---
+
+## ⭐ Support
+
+If you find this project useful, consider giving it a star on GitHub!
