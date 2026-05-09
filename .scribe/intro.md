@@ -2,8 +2,6 @@
 
 Welcome to the **Sales-Spy API** — e-commerce lead intelligence for serious sales teams.
 
-Base URL: `https://sales-spy-api-production.up.railway.app`
-
 ---
 
 ## Response Format
@@ -15,7 +13,7 @@ Every endpoint returns the same JSON structure:
 ```json
 {
   "success": true,
-  "message": "Human readable message",
+  "message": "readable message",
   "data": { ... }
 }
 ```
