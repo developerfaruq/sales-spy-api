@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -11,6 +11,7 @@ RUN apk add --no-cache \
     libzip-dev \
     postgresql-dev \
     oniguruma-dev \
+    icu-dev \
     supervisor \
     gettext
 
@@ -23,7 +24,9 @@ RUN docker-php-ext-install \
     pcntl \
     bcmath \
     gd \
-    zip
+    zip \
+    intl \
+    opcache
 
 # Install Redis extension
 RUN apk add --no-cache --virtual .build-deps \
@@ -33,57 +36,36 @@ RUN apk add --no-cache --virtual .build-deps \
     && docker-php-ext-enable redis \
     && apk del .build-deps
 
+# Configure OPcache for production
+RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.revalidate_freq=0" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.save_comments=1" >> /usr/local/etc/php/conf.d/opcache.ini
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+# Copy app files
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Install PHP dependencies (no dev, optimized autoloader)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+# Set correct ownership before runtime
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Copy nginx config template
 COPY docker/nginx.conf /etc/nginx/nginx.conf.template
 
-# Write start.sh directly inside the container
-# This completely avoids CRLF line ending issues from Windows/Mac
-RUN printf '#!/bin/sh\n\
-    \n\
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"\n\
-    echo "  Sales-Spy API — Starting up"\n\
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"\n\
-    \n\
-    export PORT="${PORT:-8080}"\n\
-    echo "→ Using port: $PORT"\n\
-    \n\
-    envsubst '"'"'${PORT}'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf\n\
-    \n\
-    php artisan optimize:clear\n\
-    \n\
-    echo "→ Running database migrations..."\n\
-    php artisan migrate:fresh --force\n\
-    \n\
-    echo "→ Seeding roles..."\n\
-    php artisan db:seed --force\n\
-    \n\
-    echo "→ Caching configuration..."\n\
-    php artisan config:cache\n\
-    php artisan route:cache\n\
-    php artisan view:cache\n\
-    \n\
-    echo "→ Setting storage permissions..."\n\
-    chmod -R 775 /var/www/html/storage\n\
-    chmod -R 775 /var/www/html/bootstrap/cache\n\
-    \n\
-    echo "→ Starting PHP-FPM..."\n\
-    php-fpm -D\n\
-    \n\
-    echo "→ Starting Nginx..."\n\
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"\n\
-    echo "  API is live on port $PORT"\n\
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"\n\
-    nginx -g '"'"'daemon off;'"'"'\n\
-    ' > /start.sh && chmod +x /start.sh
+# Copy and prepare start script
+COPY docker/start.sh /start.sh
+RUN chmod +x /start.sh
 
 EXPOSE 8080
 
