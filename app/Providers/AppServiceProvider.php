@@ -33,7 +33,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AuthService::class, function ($app) {
             return new AuthService(
                 $app->make(ActivityService::class),
-                $app->make(SubscriptionService::class) // 👈 add this
+                $app->make(SubscriptionService::class) // 
+            );
+        });
+
+        $this->app->singleton(SubscriptionService::class, function () {
+            return new SubscriptionService();
+        });
+
+        $this->app->singleton(AuthService::class, function ($app) {
+            return new AuthService(
+                $app->make(ActivityService::class),
+                $app->make(SubscriptionService::class),
             );
         });
     }

@@ -4,11 +4,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\Store\PlanController;
 
 
 
 /*
-|--------------------------------------------------------------------------
 | API Routes — Sales-Spy
 |--------------------------------------------------------------------------
 |
@@ -19,7 +19,10 @@ use App\Http\Controllers\User\ProfileController;
 
 Route::prefix('v1')->group(function () {
 
-    // Health check — no auth required
+
+
+    // Plans — public
+    Route::get('/plans', [PlanController::class, 'index']);
     /**
      * Health Check
      *
@@ -62,6 +65,9 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum', 'throttle:120,1')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
 
+
+        Route::get('/user/subscription',        [PlanController::class, 'currentSubscription']);
+        Route::post('/user/subscription/cancel', [PlanController::class, 'cancel']);
 
 
         // ─── Profile & Settings ───────────────────────────────────

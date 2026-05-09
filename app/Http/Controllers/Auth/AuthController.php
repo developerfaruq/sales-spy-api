@@ -68,11 +68,11 @@ class AuthController extends Controller
         return $this->successResponse(
             data: [
                 'token' => $token,
-                'user'  => [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
-                    'email' => $user->email,
-                    'plan'  => $user->plan,
+                'user' => [
+                    'id'              => $user->id,
+                    'name'            => $user->name,
+                    'email'           => $user->email,
+                    'plan'            => $user->currentPlanSlug(),
                     'credits_balance' => $user->credits_balance,
                 ],
             ],

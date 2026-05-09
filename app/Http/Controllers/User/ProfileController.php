@@ -410,16 +410,25 @@ class ProfileController extends Controller
 
     private function formatUser($user): array
     {
+        $subscription = $user->activeSubscription;
+        $plan = $subscription?->plan;
+
         return [
             'id'              => $user->id,
             'name'            => $user->name,
             'email'           => $user->email,
-            'plan'            => $user->plan,
+            'plan'            => $user->currentPlanSlug(),
             'credits_balance' => $user->credits_balance,
             'profile_image'   => $user->profile_image_url,
             'email_verified'  => !is_null($user->email_verified_at),
             'is_active'       => $user->is_active,
             'created_at'      => $user->created_at,
+            'subscription'    => $subscription ? [
+                'status'             => $subscription->status->value,
+                'billing_cycle'      => $subscription->billing_cycle->value,
+                'current_period_end' => $subscription->current_period_end,
+                'cancelled_at'       => $subscription->cancelled_at,
+            ] : null,
         ];
     }
 
