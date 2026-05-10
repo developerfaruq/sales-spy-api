@@ -129,6 +129,28 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-payments" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="payments">
+                    <a href="#payments">Payments</a>
+                </li>
+                                    <ul id="tocify-subheader-payments" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="payments-GETapi-v1-user-payments">
+                                <a href="#payments-GETapi-v1-user-payments">List payment orders</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="payments-POSTapi-v1-user-payments-initiate">
+                                <a href="#payments-POSTapi-v1-user-payments-initiate">Initiate a payment order</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="payments-GETapi-v1-user-payments--orderId-">
+                                <a href="#payments-GETapi-v1-user-payments--orderId-">Get a single payment order</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="payments-POSTapi-v1-user-payments--orderId--proof">
+                                <a href="#payments-POSTapi-v1-user-payments--orderId--proof">Upload payment proof screenshot</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="payments-POSTapi-v1-user-payments--orderId--txid">
+                                <a href="#payments-POSTapi-v1-user-payments--orderId--txid">Submit transaction hash</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
                     <ul id="tocify-header-plans" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="plans">
                     <a href="#plans">Plans</a>
@@ -1761,6 +1783,892 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
+                <h1 id="payments">Payments</h1>
+
+    
+
+                                <h2 id="payments-GETapi-v1-user-payments">List payment orders</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns all payment orders for the authenticated user,
+newest first. Includes all statuses.</p>
+
+<span id="example-requests-GETapi-v1-user-payments">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8000/api/v1/user/payments" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/user/payments"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-user-payments">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Payment orders retrieved successfully&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;order_id&quot;: 1,
+            &quot;reference&quot;: &quot;SPY-2026-00001&quot;,
+            &quot;plan&quot;: &quot;Pro&quot;,
+            &quot;billing_cycle&quot;: &quot;monthly&quot;,
+            &quot;amount&quot;: 225,
+            &quot;currency&quot;: &quot;USDT&quot;,
+            &quot;status&quot;: &quot;approved&quot;,
+            &quot;txid&quot;: &quot;a1b2c3d4...&quot;,
+            &quot;proof_image_url&quot;: &quot;https://res.cloudinary.com/...&quot;,
+            &quot;created_at&quot;: &quot;2026-03-25T10:00:00.000000Z&quot;
+        }
+    ]
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-user-payments" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-user-payments"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-user-payments"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-user-payments" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-user-payments">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-user-payments" data-method="GET"
+      data-path="api/v1/user/payments"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-user-payments', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-user-payments"
+                    onclick="tryItOut('GETapi-v1-user-payments');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-user-payments"
+                    onclick="cancelTryOut('GETapi-v1-user-payments');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-user-payments"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/user/payments</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-user-payments"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-user-payments"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-user-payments"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        </form>
+
+                    <h2 id="payments-POSTapi-v1-user-payments-initiate">Initiate a payment order</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Creates a new payment order and returns the wallet address
+and exact amount the user needs to send.
+Any existing pending orders for the user are automatically cancelled.</p>
+
+<span id="example-requests-POSTapi-v1-user-payments-initiate">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8000/api/v1/user/payments/initiate" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"plan_slug\": \"pro\",
+    \"billing_cycle\": \"monthly\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/user/payments/initiate"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "plan_slug": "pro",
+    "billing_cycle": "monthly"
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-user-payments-initiate">
+            <blockquote>
+            <p>Example response (201):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Payment order created successfully&quot;,
+    &quot;data&quot;: {
+        &quot;order_id&quot;: 1,
+        &quot;reference&quot;: &quot;SPY-2026-00001&quot;,
+        &quot;plan&quot;: &quot;Pro&quot;,
+        &quot;billing_cycle&quot;: &quot;monthly&quot;,
+        &quot;amount&quot;: 225,
+        &quot;currency&quot;: &quot;USDT&quot;,
+        &quot;network&quot;: &quot;TRC20&quot;,
+        &quot;wallet_address&quot;: &quot;TXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,
+        &quot;status&quot;: &quot;pending&quot;,
+        &quot;expires_at&quot;: &quot;2026-03-26T12:00:00.000000Z&quot;,
+        &quot;instructions&quot;: [
+            &quot;Send exactly 225.00 USDT (TRC20) to the wallet address above&quot;,
+            &quot;Take a screenshot of the transaction confirmation&quot;,
+            &quot;Upload the screenshot using the proof upload endpoint&quot;,
+            &quot;Submit your transaction hash (TXID) from TronScan&quot;,
+            &quot;Your subscription will be activated after admin verification&quot;
+        ]
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Cannot purchase the free plan&quot;,
+    &quot;errors&quot;: null
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-user-payments-initiate" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-user-payments-initiate"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-user-payments-initiate"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-user-payments-initiate" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-user-payments-initiate">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-user-payments-initiate" data-method="POST"
+      data-path="api/v1/user/payments/initiate"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-user-payments-initiate', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-v1-user-payments-initiate"
+                    onclick="tryItOut('POSTapi-v1-user-payments-initiate');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-v1-user-payments-initiate"
+                    onclick="cancelTryOut('POSTapi-v1-user-payments-initiate');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-v1-user-payments-initiate"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/user/payments/initiate</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-user-payments-initiate"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-user-payments-initiate"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-user-payments-initiate"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>plan_slug</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="plan_slug"                data-endpoint="POSTapi-v1-user-payments-initiate"
+               value="pro"
+               data-component="body">
+    <br>
+<p>The plan slug. Example: <code>pro</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>billing_cycle</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="billing_cycle"                data-endpoint="POSTapi-v1-user-payments-initiate"
+               value="monthly"
+               data-component="body">
+    <br>
+<p>monthly or yearly. Example: <code>monthly</code></p>
+        </div>
+        </form>
+
+                    <h2 id="payments-GETapi-v1-user-payments--orderId-">Get a single payment order</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-GETapi-v1-user-payments--orderId-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8000/api/v1/user/payments/1" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/user/payments/1"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-user-payments--orderId-">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Order retrieved successfully&quot;,
+    &quot;data&quot;: {
+        &quot;order_id&quot;: 1,
+        &quot;reference&quot;: &quot;SPY-2026-00001&quot;,
+        &quot;status&quot;: &quot;awaiting_verification&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-user-payments--orderId-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-user-payments--orderId-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-user-payments--orderId-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-user-payments--orderId-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-user-payments--orderId-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-user-payments--orderId-" data-method="GET"
+      data-path="api/v1/user/payments/{orderId}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-user-payments--orderId-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-user-payments--orderId-"
+                    onclick="tryItOut('GETapi-v1-user-payments--orderId-');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-user-payments--orderId-"
+                    onclick="cancelTryOut('GETapi-v1-user-payments--orderId-');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-user-payments--orderId-"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/user/payments/{orderId}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-user-payments--orderId-"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-user-payments--orderId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-user-payments--orderId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>orderId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="orderId"                data-endpoint="GETapi-v1-user-payments--orderId-"
+               value="1"
+               data-component="url">
+    <br>
+<p>The payment order ID. Example: <code>1</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="payments-POSTapi-v1-user-payments--orderId--proof">Upload payment proof screenshot</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Upload a screenshot of the transaction confirmation.
+Can be updated multiple times as long as the order
+has not been approved or rejected.</p>
+
+<span id="example-requests-POSTapi-v1-user-payments--orderId--proof">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8000/api/v1/user/payments/1/proof" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: multipart/form-data" \
+    --header "Accept: application/json" \
+    --form "proof=@/tmp/phpXutcHf" </code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/user/payments/1/proof"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "multipart/form-data",
+    "Accept": "application/json",
+};
+
+const body = new FormData();
+body.append('proof', document.querySelector('input[name="proof"]').files[0]);
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-user-payments--orderId--proof">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Proof uploaded successfully&quot;,
+    &quot;data&quot;: {
+        &quot;order_id&quot;: 1,
+        &quot;reference&quot;: &quot;SPY-2026-00001&quot;,
+        &quot;proof_image_url&quot;: &quot;https://res.cloudinary.com/...&quot;,
+        &quot;status&quot;: &quot;pending&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;This order cannot accept a proof upload&quot;,
+    &quot;errors&quot;: null
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-user-payments--orderId--proof" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-user-payments--orderId--proof"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-user-payments--orderId--proof"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-user-payments--orderId--proof" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-user-payments--orderId--proof">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-user-payments--orderId--proof" data-method="POST"
+      data-path="api/v1/user/payments/{orderId}/proof"
+      data-authed="1"
+      data-hasfiles="1"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-user-payments--orderId--proof', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-v1-user-payments--orderId--proof"
+                    onclick="tryItOut('POSTapi-v1-user-payments--orderId--proof');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-v1-user-payments--orderId--proof"
+                    onclick="cancelTryOut('POSTapi-v1-user-payments--orderId--proof');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-v1-user-payments--orderId--proof"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/user/payments/{orderId}/proof</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-user-payments--orderId--proof"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-user-payments--orderId--proof"
+               value="multipart/form-data"
+               data-component="header">
+    <br>
+<p>Example: <code>multipart/form-data</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-user-payments--orderId--proof"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>orderId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="orderId"                data-endpoint="POSTapi-v1-user-payments--orderId--proof"
+               value="1"
+               data-component="url">
+    <br>
+<p>The payment order ID. Example: <code>1</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>proof</code></b>&nbsp;&nbsp;
+<small>file</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="file" style="display: none"
+                              name="proof"                data-endpoint="POSTapi-v1-user-payments--orderId--proof"
+               value=""
+               data-component="body">
+    <br>
+<p>Screenshot image. Max 5MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/phpXutcHf</code></p>
+        </div>
+        </form>
+
+                    <h2 id="payments-POSTapi-v1-user-payments--orderId--txid">Submit transaction hash</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Submit the TXID (transaction hash) from TronScan after sending payment.
+The order status will change to awaiting_verification and
+the admin will be notified to review.</p>
+
+<span id="example-requests-POSTapi-v1-user-payments--orderId--txid">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8000/api/v1/user/payments/1/txid" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"txid\": \"a1b2c3d4e5f6...\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/user/payments/1/txid"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "txid": "a1b2c3d4e5f6..."
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-user-payments--orderId--txid">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Transaction submitted. Your payment is being reviewed.&quot;,
+    &quot;data&quot;: {
+        &quot;order_id&quot;: 1,
+        &quot;reference&quot;: &quot;SPY-2026-00001&quot;,
+        &quot;status&quot;: &quot;awaiting_verification&quot;,
+        &quot;txid&quot;: &quot;a1b2c3d4e5f6...&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Please upload a proof screenshot before submitting your TXID.&quot;,
+    &quot;errors&quot;: null
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-user-payments--orderId--txid" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-user-payments--orderId--txid"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-user-payments--orderId--txid"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-user-payments--orderId--txid" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-user-payments--orderId--txid">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-user-payments--orderId--txid" data-method="POST"
+      data-path="api/v1/user/payments/{orderId}/txid"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-user-payments--orderId--txid', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-v1-user-payments--orderId--txid"
+                    onclick="tryItOut('POSTapi-v1-user-payments--orderId--txid');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-v1-user-payments--orderId--txid"
+                    onclick="cancelTryOut('POSTapi-v1-user-payments--orderId--txid');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-v1-user-payments--orderId--txid"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/user/payments/{orderId}/txid</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-user-payments--orderId--txid"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-user-payments--orderId--txid"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-user-payments--orderId--txid"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>orderId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="orderId"                data-endpoint="POSTapi-v1-user-payments--orderId--txid"
+               value="1"
+               data-component="url">
+    <br>
+<p>The payment order ID. Example: <code>1</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>txid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="txid"                data-endpoint="POSTapi-v1-user-payments--orderId--txid"
+               value="a1b2c3d4e5f6..."
+               data-component="body">
+    <br>
+<p>The 64-character hex transaction hash from TronScan. Example: <code>a1b2c3d4e5f6...</code></p>
+        </div>
+        </form>
+
                 <h1 id="plans">Plans</h1>
 
     
@@ -2570,7 +3478,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
-    --form "avatar=@/tmp/phprgg9XM" </code></pre></div>
+    --form "avatar=@/tmp/php0GlZSc" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -2704,7 +3612,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The image file. Max 2MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/phprgg9XM</code></p>
+<p>The image file. Max 2MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/php0GlZSc</code></p>
         </div>
         </form>
 

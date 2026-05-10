@@ -10,6 +10,9 @@ use App\Services\ActivityService;
 use App\Services\ProfileService;
 use App\Services\AuthService;
 use App\Services\SubscriptionService;
+use App\Services\PaymentService;
+
+
 
 
 class AppServiceProvider extends ServiceProvider
@@ -45,6 +48,13 @@ class AppServiceProvider extends ServiceProvider
             return new AuthService(
                 $app->make(ActivityService::class),
                 $app->make(SubscriptionService::class),
+            );
+        });
+        $this->app->singleton(PaymentService::class, function ($app) {
+            return new PaymentService(
+                $app->make(SubscriptionService::class),
+                $app->make(CloudinaryService::class),
+                $app->make(ActivityService::class),
             );
         });
     }

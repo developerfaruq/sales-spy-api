@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\Store\PlanController;
-
+use App\Http\Controllers\Payment\PaymentController;
 
 
 /*
@@ -85,6 +85,16 @@ Route::prefix('v1')->group(function () {
             // Notifications
             Route::get('/notifications/preferences',  [ProfileController::class, 'getNotificationPreferences']);
             Route::put('/notifications/preferences',  [ProfileController::class, 'updateNotificationPreferences']);
+
+
+            Route::prefix('payments')->group(function () {
+                Route::get('/',                          [PaymentController::class, 'index']);
+                Route::post('/initiate',                 [PaymentController::class, 'initiate']);
+                Route::get('/{orderId}', [PaymentController::class, 'show'])
+                    ->whereNumber('orderId');
+                Route::post('/{orderId}/proof',          [PaymentController::class, 'uploadProof']);
+                Route::post('/{orderId}/txid',           [PaymentController::class, 'submitTxid']);
+            });
 
             // Sessions
             Route::get('/sessions',           [ProfileController::class, 'sessions']);
