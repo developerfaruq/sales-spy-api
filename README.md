@@ -4,7 +4,7 @@ Sales-Spy is a scalable backend API designed to power sales intelligence platfor
 
 ---
 
-## 🧠 Overview
+## Overview
 
 Sales-Spy focuses on delivering a clean and modular architecture for building SaaS products in the sales and analytics space. It abstracts core backend responsibilities such as authentication, user management, and activity tracking into reusable services.
 
