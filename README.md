@@ -1,4 +1,4 @@
-# 🚀 Sales-Spy API
+# Sales-Spy API
 
 Sales-Spy is a scalable backend API designed to power sales intelligence platforms. It provides a structured system for managing users, tracking activities, handling authentication, and enabling data-driven insights for modern applications.
 
@@ -12,9 +12,9 @@ The API is designed with scalability, performance, and developer experience in m
 
 ---
 
-## ⚡ Core Capabilities
+## Core Capabilities
 
-### 🔐 Authentication System
+###  Authentication System
 
 - Secure user registration and login
 - Token-based authentication
@@ -23,7 +23,7 @@ The API is designed with scalability, performance, and developer experience in m
 
 ---
 
-### 👤 User Management
+### User Management
 
 - Profile creation and updates
 - Avatar upload and deletion (Cloudinary integration)
@@ -32,7 +32,7 @@ The API is designed with scalability, performance, and developer experience in m
 
 ---
 
-### 🔔 Notification Preferences
+### Notification Preferences
 
 - Per-user notification settings
 - Default preference initialization
@@ -40,7 +40,7 @@ The API is designed with scalability, performance, and developer experience in m
 
 ---
 
-### 🧠 Activity Tracking
+###  Activity Tracking
 
 - Logs user actions across the system
 - Tracks events like profile updates, login activity, etc.
@@ -48,7 +48,7 @@ The API is designed with scalability, performance, and developer experience in m
 
 ---
 
-### 🛡️ Roles & Permissions
+###  Roles & Permissions
 
 - Role-based access control using a permission system
 - Supports multiple roles (e.g., admin, user)
@@ -65,7 +65,7 @@ The API is designed with scalability, performance, and developer experience in m
 
 ---
 
-### 📄 API Documentation
+### API Documentation
 
 - Automatically generated using Scribe
 - Includes request/response examples
@@ -73,7 +73,7 @@ The API is designed with scalability, performance, and developer experience in m
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 Sales-Spy follows a **Service Layer Architecture** to ensure clean separation of concerns:
 
@@ -89,7 +89,7 @@ This structure improves:
 
 ---
 
-## 🧩 Key Components
+## Key Components
 
 ### Services
 
@@ -119,7 +119,7 @@ Represent database entities like:
 
 ---
 
-## 🎯 Use Cases
+## Use Cases
 
 Sales-Spy API can be used to build:
 
@@ -131,7 +131,7 @@ Sales-Spy API can be used to build:
 
 ---
 
-## 🚀 Design Philosophy
+## Design Philosophy
 
 - **Modular** → Easy to extend and maintain
 - **Secure** → Built with authentication and validation best practices
@@ -140,7 +140,7 @@ Sales-Spy API can be used to build:
 
 ---
 
-## 🔮 Future Vision
+## Future Vision
 
 - Advanced analytics engine
 - AI-powered insights
@@ -150,13 +150,13 @@ Sales-Spy API can be used to build:
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Faruq (DEVFARUQ)**
 Backend Engineer focused on building scalable APIs and SaaS platforms.
 
 ---
 
-## ⭐ Support
+## Support
 
 If you find this project useful, consider giving it a star on GitHub!
