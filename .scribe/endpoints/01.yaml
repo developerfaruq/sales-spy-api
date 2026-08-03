@@ -1,21 +1,22 @@
-name: General
+name: Plans
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/health
+    uri: api/v1/plans
     metadata:
       custom: []
-      groupName: General
+      groupName: Plans
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Health Check'
+      title: 'List all available plans'
       description: |-
-        Check if the API is online. No authentication required.
-        Use this to verify the server is reachable before making other calls.
+        Returns all active plans with prices and features.
+        Public endpoint — no authentication required.
+        The frontend uses this to populate the pricing page dynamically.
       authenticated: false
       deprecated: false
     headers:
@@ -35,16 +36,157 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Sales-Spy API v1 is live",
-            "data": {
-              "version": "1.0.0",
-              "environment": "production"
-            }
+            "message": "Plans retrieved successfully",
+            "data": [
+              {
+                "slug": "basic",
+                "name": "Basic",
+                "monthly_price_usd": 115.00,
+                "yearly_price_usd": 1104.00,
+                "monthly_quota": 500,
+                "features": ["500 leads per month", "Basic filtering options"],
+                "is_popular": false
+              }
+            ]
           }
         headers: []
         description: ''
     responseFields: []
     auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/user/subscription
+    metadata:
+      custom: []
+      groupName: Plans
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get current subscription'
+      description: |-
+        Returns the authenticated user's active subscription
+        including plan details, billing cycle, and period end date.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Subscription retrieved successfully",
+            "data": {
+              "plan": {
+                "slug": "pro",
+                "name": "Pro",
+                "monthly_price_usd": 225.00,
+                "yearly_price_usd": 2160.00,
+                "monthly_quota": 2000,
+                "features": ["2,000 leads per month", "Priority support"],
+                "is_popular": true
+              },
+              "status": "active",
+              "billing_cycle": "monthly",
+              "current_period_end": "2026-04-25T00:00:00.000000Z",
+              "cancelled_at": null
+            }
+          }
+        headers: []
+        description: 'Active subscription'
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "No active subscription found",
+            "data": null
+          }
+        headers: []
+        description: 'No subscription'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/user/subscription/cancel
+    metadata:
+      custom: []
+      groupName: Plans
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Cancel subscription'
+      description: |-
+        Cancels the authenticated user's active subscription.
+        Access continues until the end of the current billing period —
+        the user is not cut off immediately.
+        After the period ends, they are automatically downgraded to the free plan.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Subscription cancelled. Access continues until 2026-04-25.",
+            "data": null
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 400
+        content: |-
+          {
+            "success": false,
+            "message": "No active subscription to cancel",
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
     controller: null
     method: null
     route: null

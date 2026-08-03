@@ -1,76 +1,22 @@
-name: Plans
+name: 'Admin — Users'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/plans
+    uri: api/v1/admin/users
     metadata:
       custom: []
-      groupName: Plans
+      groupName: 'Admin — Users'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List all available plans'
+      title: 'List all registered users'
       description: |-
-        Returns all active plans with prices and features.
-        Public endpoint — no authentication required.
-        The frontend uses this to populate the pricing page dynamically.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Plans retrieved successfully",
-            "data": [
-              {
-                "slug": "basic",
-                "name": "Basic",
-                "monthly_price_usd": 115.00,
-                "yearly_price_usd": 1104.00,
-                "monthly_quota": 500,
-                "features": ["500 leads per month", "Basic filtering options"],
-                "is_popular": false
-              }
-            ]
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/v1/user/subscription
-    metadata:
-      custom: []
-      groupName: Plans
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get current subscription'
-      description: |-
-        Returns the authenticated user's active subscription
-        including plan details, billing cycle, and period end date.
+        Returns a paginated list of all users with their
+        subscription status and plan details.
+        Admin access required.
       authenticated: true
       deprecated: false
     headers:
@@ -79,8 +25,56 @@ endpoints:
       Accept: application/json
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'Page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Results per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Search by name or email.'
+        required: false
+        example: john
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      plan:
+        custom: []
+        name: plan
+        description: 'Filter by plan slug.'
+        required: false
+        example: pro
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      search: john
+      plan: pro
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -91,36 +85,30 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Subscription retrieved successfully",
-            "data": {
-              "plan": {
-                "slug": "pro",
-                "name": "Pro",
-                "monthly_price_usd": 225.00,
-                "yearly_price_usd": 2160.00,
-                "monthly_quota": 2000,
-                "features": ["2,000 leads per month", "Priority support"],
-                "is_popular": true
-              },
-              "status": "active",
-              "billing_cycle": "monthly",
-              "current_period_end": "2026-04-25T00:00:00.000000Z",
-              "cancelled_at": null
+            "message": "Users retrieved successfully",
+            "data": [
+              {
+                "id": 1,
+                "name": "John Doe",
+                "email": "john@example.com",
+                "plan": "pro",
+                "credits_balance": 2000,
+                "is_active": true,
+                "email_verified": true,
+                "subscription_status": "active",
+                "subscription_ends": "2026-04-25T00:00:00.000000Z",
+                "registered_at": "2026-03-01T00:00:00.000000Z"
+              }
+            ],
+            "meta": {
+              "current_page": 1,
+              "last_page": 5,
+              "per_page": 25,
+              "total": 120
             }
           }
         headers: []
-        description: 'Active subscription'
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "No active subscription found",
-            "data": null
-          }
-        headers: []
-        description: 'No subscription'
+        description: ''
     responseFields: []
     auth:
       - headers
@@ -132,28 +120,36 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/v1/user/subscription/cancel
+      - GET
+    uri: 'api/v1/admin/users/{userId}'
     metadata:
       custom: []
-      groupName: Plans
+      groupName: 'Admin — Users'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Cancel subscription'
-      description: |-
-        Cancels the authenticated user's active subscription.
-        Access continues until the end of the current billing period —
-        the user is not cut off immediately.
-        After the period ends, they are automatically downgraded to the free plan.
+      title: "Get a single user's details"
+      description: ''
       authenticated: true
       deprecated: false
     headers:
       Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
+    urlParameters:
+      userId:
+        custom: []
+        name: userId
+        description: 'The user ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      userId: 1
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -166,19 +162,78 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Subscription cancelled. Access continues until 2026-04-25.",
-            "data": null
+            "message": "User retrieved successfully",
+            "data": {
+              "id": 1,
+              "name": "John Doe",
+              "email": "john@example.com",
+              "plan": "pro",
+              "credits_balance": 2000,
+              "is_active": true,
+              "subscription_status": "active",
+              "subscription_ends": "2026-04-25T00:00:00.000000Z",
+              "registered_at": "2026-03-01T00:00:00.000000Z"
+            }
           }
         headers: []
         description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/v1/admin/users/{userId}/toggle-status'
+    metadata:
+      custom: []
+      groupName: 'Admin — Users'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Toggle a user's active status"
+      description: |-
+        Activate or deactivate a user account.
+        Deactivated users cannot log in.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      userId:
+        custom: []
+        name: userId
+        description: 'The user ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      userId: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
       -
         custom: []
-        status: 400
+        status: 200
         content: |-
           {
-            "success": false,
-            "message": "No active subscription to cancel",
-            "errors": null
+            "success": true,
+            "message": "User deactivated successfully",
+            "data": { "is_active": false }
           }
         headers: []
         description: ''

@@ -6,7 +6,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\Store\PlanController;
 use App\Http\Controllers\Payment\PaymentController;
-
+use App\Http\Controllers\Admin\AdminUserController;
 
 /*
 | API Routes — Sales-Spy
@@ -20,6 +20,23 @@ use App\Http\Controllers\Payment\PaymentController;
 Route::prefix('v1')->group(function () {
 
 
+
+
+    // ─── Admin Routes ─────────────────────────────────────────────
+    // Requires both a valid token AND the admin role
+    Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])
+        ->prefix('admin')
+        ->group(function () {
+
+            // Users
+            Route::get('/users',                      [AdminUserController::class, 'index']);
+            Route::get('/users/{userId}',             [AdminUserController::class, 'show']);
+            Route::patch('/users/{userId}/toggle-status', [AdminUserController::class, 'toggleStatus']);
+
+            // Payment orders — Phase 14 admin approval will go here
+            // Route::get('/payments', [AdminPaymentController::class, 'index']);
+            // Route::put('/payments/{orderId}/review', [AdminPaymentController::class, 'review']);
+        });
 
     // Plans — public
     Route::get('/plans', [PlanController::class, 'index']);

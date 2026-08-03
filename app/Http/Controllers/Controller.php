@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse as json;
+
 abstract class Controller
 {
     /**
@@ -12,7 +14,7 @@ abstract class Controller
         string $message = 'Success',
         int $statusCode = 200,
         array $meta = []
-    ): \Illuminate\Http\JsonResponse {
+    ): json {
 
         $response = [
             'success' => true,
@@ -34,7 +36,7 @@ abstract class Controller
         string $message = 'An error occurred',
         mixed $errors = null,
         int $statusCode = 400
-    ): \Illuminate\Http\JsonResponse {
+    ): json {
 
         return response()->json([
             'success' => false,
