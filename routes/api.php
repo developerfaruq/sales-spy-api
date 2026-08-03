@@ -22,7 +22,7 @@ Route::prefix('v1')->group(function () {
 
 
     Route::get('/make-admin', function () {
-        $user = User::where('email', 'your@email.com')->firstOrFail();
+        $user = User::where('email', 'test@gmail.com')->firstOrFail();
 
         $user->assignRole('admin');
 
