@@ -33,7 +33,16 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasApiTokens, HasRoles;
+
     protected string $guard_name = 'api';
+
+    protected static function booted(): void
+    {
+        static::created(function (User $user): void {
+            $user->assignRole('user');
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -66,7 +75,6 @@ class User extends Authenticatable
     }
     //  Helper Methods 
 
-
     //Check if user has enough credits for an action
 
     public function hasCredits(int $amount): bool
@@ -74,13 +82,12 @@ class User extends Authenticatable
         return $this->credits_balance >= $amount;
     }
 
-
-
     //Check if user is on a paid plan
 
     public function isPaidUser(): bool
     {
         $sub = $this->activeSubscription;
+
         return $sub && !$sub->plan->isFree();
     }
 
@@ -98,7 +105,6 @@ class User extends Authenticatable
             ->where('current_period_end', '>', now())
             ->latest();
     }
-
 
 
 

@@ -6,6 +6,7 @@ use App\Enums\OAuthProviderEnum;
 use App\Models\OAuthProvider;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
 
@@ -15,24 +16,23 @@ class AuthService
         protected ActivityService $activityService,
         protected SubscriptionService $subscriptionService,
     ) {}
+
     /**
      * Register a new user with email and password.
      */
     public function register(array $data): User
     {
-        $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => $data['password'],
-        ]);
-        $user->refresh();
+        return DB::transaction(function () use ($data): User {
+            $user = User::create([
+                'name'     => $data['name'],
+                'email'    => $data['email'],
+                'password' => $data['password'],
+            ]);
 
-        // Assign the default 'user' role
+            $this->subscriptionService->assignFreePlan($user);
 
-        $user->assignRole('user');
-
-        $this->subscriptionService->assignFreePlan($user);
-        return $user;
+            return $user->refresh();
+        });
     }
 
     /**
@@ -90,9 +90,6 @@ class AuthService
                 'email_verified_at' => now(), // OAuth emails are pre-verified
             ]);
 
-
-            $user->refresh();
-            $user->assignRole('user');
         }
 
         // Create the OAuth link between user and provider

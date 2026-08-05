@@ -7,7 +7,7 @@ use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\Store\PlanController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Admin\AdminUserController;
-// use App\Models\User;
+
 /*
 | API Routes — Sales-Spy
 |--------------------------------------------------------------------------
@@ -20,17 +20,6 @@ use App\Http\Controllers\Admin\AdminUserController;
 Route::prefix('v1')->group(function () {
 
 
-
-    // Route::get('/make-admin', function () {
-    //     $user = User::where('email', 'test@gmail.com')->firstOrFail();
-
-    //     $user->assignRole('admin');
-
-    //     return [
-    //         'success' => true,
-    //         'has_role' => $user->hasRole('admin'),
-    //     ];
-    // });
 
 
     // ─── Admin Routes ─────────────────────────────────────────────

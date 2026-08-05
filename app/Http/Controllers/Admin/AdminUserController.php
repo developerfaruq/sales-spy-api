@@ -53,7 +53,7 @@ class AdminUserController extends Controller
     {
         $perPage = min((int) $request->get('per_page', 25), 100);
 
-        $query = User::with(['activeSubscription.plan'])
+        $query = User::with(['activeSubscription.plan', 'roles'])
             ->latest();
 
         // Search by name or email
@@ -111,7 +111,7 @@ class AdminUserController extends Controller
      */
     public function show(Request $request, int $userId): JsonResponse
     {
-        $user = User::with(['activeSubscription.plan'])
+        $user = User::with(['activeSubscription.plan', 'roles'])
             ->find($userId);
 
         if (! $user) {
@@ -185,6 +185,7 @@ class AdminUserController extends Controller
             'id'                  => $user->id,
             'name'                => $user->name,
             'email'               => $user->email,
+            'roles'               => $user->getRoleNames()->values(),
             'plan'                => $user->currentPlanSlug(),
             'credits_balance'     => $user->credits_balance,
             'is_active'           => $user->is_active,
