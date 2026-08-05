@@ -1,18 +1,18 @@
-name: Notifications
+name: Profile
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/user/notifications/preferences
+    uri: api/v1/user/profile
     metadata:
       custom: []
-      groupName: Notifications
+      groupName: Profile
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Get the user's notification preferences."
+      title: "Get the authenticated user's profile."
       description: ''
       authenticated: true
       deprecated: false
@@ -34,15 +34,17 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Notification preferences retrieved",
+            "message": "Profile retrieved successfully",
             "data": {
-              "email_on_export_complete": true,
-              "email_on_billing": true,
-              "email_on_new_features": true,
-              "email_on_security_alerts": true,
-              "inapp_on_export_complete": true,
-              "inapp_on_low_credits": true,
-              "inapp_on_scan_complete": true
+              "id": 1,
+              "name": "John Doe",
+              "email": "john@example.com",
+              "plan": "free",
+              "credits_balance": 500,
+              "profile_image": "https://res.cloudinary.com/...",
+              "email_verified": true,
+              "is_active": true,
+              "created_at": "2026-03-01T00:00:00.000000Z"
             }
           }
         headers: []
@@ -58,15 +60,199 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - PUT
-    uri: api/v1/user/notifications/preferences
+      - PATCH
+    uri: api/v1/user/profile
     metadata:
       custom: []
-      groupName: Notifications
+      groupName: Profile
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Update the user's notification preferences."
+      title: 'Update profile'
+      description: 'Update your name and/or email address. Only send the fields you want to change.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'optional Your display name.'
+        required: false
+        example: 'John Doe'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'optional A valid unique email address.'
+        required: false
+        example: john@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'John Doe'
+      email: john@example.com
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Profile updated successfully",
+            "data": {
+              "id": 1,
+              "name": "John Doe",
+              "email": "john@example.com",
+              "plan": "free",
+              "credits_balance": 500,
+              "profile_image": null,
+              "email_verified": true,
+              "is_active": true,
+              "created_at": "2026-03-01T00:00:00.000000Z"
+            }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/user/profile/avatar
+    metadata:
+      custom: []
+      groupName: Profile
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Upload a new avatar image.'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: multipart/form-data
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      avatar:
+        custom: []
+        name: avatar
+        description: 'The image file. Max 2MB. Accepted: jpg, jpeg, png, webp.'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters: []
+    fileParameters:
+      avatar: null
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Avatar updated successfully",
+            "data": { "profile_image": "https://res.cloudinary.com/..." }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: api/v1/user/profile/avatar
+    metadata:
+      custom: []
+      groupName: Profile
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Delete the user's avatar."
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Avatar removed successfully",
+            "data": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: api/v1/user/password
+    metadata:
+      custom: []
+      groupName: Profile
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Change the authenticated user's password."
       description: ''
       authenticated: true
       deprecated: false
@@ -79,91 +265,43 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      email_on_export_complete:
+      current_password:
         custom: []
-        name: email_on_export_complete
-        description: optional
-        required: false
-        example: true
-        type: boolean
+        name: current_password
+        description: 'Your current password.'
+        required: true
+        example: oldpassword123
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      email_on_billing:
+      new_password:
         custom: []
-        name: email_on_billing
-        description: optional
-        required: false
-        example: false
-        type: boolean
+        name: new_password
+        description: 'Min 8 characters.'
+        required: true
+        example: newpassword123
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      email_on_new_features:
+      new_password_confirmation:
         custom: []
-        name: email_on_new_features
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email_on_security_alerts:
-        custom: []
-        name: email_on_security_alerts
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      inapp_on_export_complete:
-        custom: []
-        name: inapp_on_export_complete
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      inapp_on_low_credits:
-        custom: []
-        name: inapp_on_low_credits
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      inapp_on_scan_complete:
-        custom: []
-        name: inapp_on_scan_complete
-        description: optional
-        required: false
-        example: false
-        type: boolean
+        name: new_password_confirmation
+        description: 'Must match new_password.'
+        required: true
+        example: newpassword123
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      email_on_export_complete: true
-      email_on_billing: false
-      email_on_new_features: true
-      email_on_security_alerts: true
-      inapp_on_export_complete: true
-      inapp_on_low_credits: true
-      inapp_on_scan_complete: false
+      current_password: oldpassword123
+      new_password: newpassword123
+      new_password_confirmation: newpassword123
     fileParameters: []
     responses:
       -
@@ -172,8 +310,19 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Notification preferences updated",
-            "data": { "email_on_billing": false }
+            "message": "Password changed successfully",
+            "data": null
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "success": false,
+            "message": "Current password is incorrect",
+            "errors": null
           }
         headers: []
         description: ''

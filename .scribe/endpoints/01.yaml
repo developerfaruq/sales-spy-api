@@ -1,76 +1,21 @@
-name: Plans
+name: 'Admin - Payments'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/plans
+    uri: api/v1/admin/payments
     metadata:
       custom: []
-      groupName: Plans
+      groupName: 'Admin - Payments'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List all available plans'
+      title: 'List payment orders'
       description: |-
-        Returns all active plans with prices and features.
-        Public endpoint — no authentication required.
-        The frontend uses this to populate the pricing page dynamically.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Plans retrieved successfully",
-            "data": [
-              {
-                "slug": "basic",
-                "name": "Basic",
-                "monthly_price_usd": 115.00,
-                "yearly_price_usd": 1104.00,
-                "monthly_quota": 500,
-                "features": ["500 leads per month", "Basic filtering options"],
-                "is_popular": false
-              }
-            ]
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/v1/user/subscription
-    metadata:
-      custom: []
-      groupName: Plans
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get current subscription'
-      description: |-
-        Returns the authenticated user's active subscription
-        including plan details, billing cycle, and period end date.
+        Returns payment orders across all users, newest first. Results can be
+        filtered by status or plan and searched by payment or user details.
       authenticated: true
       deprecated: false
     headers:
@@ -79,8 +24,61 @@ endpoints:
       Accept: application/json
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'Filter by payment status.'
+        required: false
+        example: awaiting_verification
+        type: string
+        enumValues:
+          - pending
+          - awaiting_verification
+          - approved
+          - rejected
+          - expired
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      plan:
+        custom: []
+        name: plan
+        description: 'Filter by plan slug. The <code>slug</code> of an existing record in the plans table.'
+        required: false
+        example: pro
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Search by order reference, TXID, user name, or user email. Must not be greater than 255 characters.'
+        required: false
+        example: SPY-2026
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Results per page. Maximum 100. Must be at least 1. Must not be greater than 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: awaiting_verification
+      plan: pro
+      search: SPY-2026
+      per_page: 25
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -91,36 +89,35 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Subscription retrieved successfully",
-            "data": {
-              "plan": {
-                "slug": "pro",
-                "name": "Pro",
-                "monthly_price_usd": 225.00,
-                "yearly_price_usd": 2160.00,
-                "monthly_quota": 2000,
-                "features": ["2,000 leads per month", "Priority support"],
-                "is_popular": true
-              },
-              "status": "active",
+            "message": "Payment orders retrieved successfully",
+            "data": [{
+              "order_id": 42,
+              "reference": "SPY-2026-00042",
+              "user": {"id": 7, "name": "Jane Doe", "email": "jane@example.com"},
+              "plan": {"slug": "pro", "name": "Pro"},
               "billing_cycle": "monthly",
-              "current_period_end": "2026-04-25T00:00:00.000000Z",
-              "cancelled_at": null
-            }
+              "amount": 50,
+              "currency": "USDT",
+              "network": "TRC20",
+              "status": "awaiting_verification",
+              "txid": "a1b2c3d4e5f6",
+              "proof_image_url": "https://res.cloudinary.com/example/proof.png",
+              "reviewer": null,
+              "reviewed_at": null,
+              "rejection_reason": null,
+              "expires_at": "2026-08-06T12:00:00.000000Z",
+              "created_at": "2026-08-05T12:00:00.000000Z"
+            }],
+            "meta": {"current_page": 1, "last_page": 1, "per_page": 25, "total": 1}
           }
         headers: []
-        description: 'Active subscription'
+        description: ''
       -
         custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "No active subscription found",
-            "data": null
-          }
+        status: 403
+        content: '{"success": false, "message": "Unauthorized. Admin access required.", "errors": null}'
         headers: []
-        description: 'No subscription'
+        description: ''
     responseFields: []
     auth:
       - headers
@@ -132,32 +129,69 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/v1/user/subscription/cancel
+      - PUT
+    uri: 'api/v1/admin/payments/{orderId}/review'
     metadata:
       custom: []
-      groupName: Plans
+      groupName: 'Admin - Payments'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Cancel subscription'
+      title: 'Review a payment order'
       description: |-
-        Cancels the authenticated user's active subscription.
-        Access continues until the end of the current billing period —
-        the user is not cut off immediately.
-        After the period ends, they are automatically downgraded to the free plan.
+        Approves or rejects an order awaiting verification. Approval activates
+        the purchased subscription and resets credits to the selected plan quota.
+        Each order can be reviewed only once.
       authenticated: true
       deprecated: false
     headers:
       Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
+    urlParameters:
+      orderId:
+        custom: []
+        name: orderId
+        description: 'The payment order ID.'
+        required: true
+        example: 42
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      orderId: 42
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
+    bodyParameters:
+      decision:
+        custom: []
+        name: decision
+        description: 'The admin review decision. Accepted values: approved, rejected.'
+        required: true
+        example: approved
+        type: string
+        enumValues:
+          - approved
+          - rejected
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      rejection_reason:
+        custom: []
+        name: rejection_reason
+        description: 'Required when decision is rejected; prohibited when approved. Must not be greater than 1000 characters.'
+        required: false
+        example: 'The submitted TXID could not be verified on TronScan.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      decision: approved
+      rejection_reason: 'The submitted TXID could not be verified on TronScan.'
     fileParameters: []
     responses:
       -
@@ -166,20 +200,38 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Subscription cancelled. Access continues until 2026-04-25.",
-            "data": null
+            "message": "Payment approved and subscription activated successfully",
+            "data": {"order_id": 42, "reference": "SPY-2026-00042", "status": "approved"}
           }
+        headers: []
+        description: Approved
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Payment rejected successfully",
+            "data": {"order_id": 42, "reference": "SPY-2026-00042", "status": "rejected", "rejection_reason": "TXID could not be verified"}
+          }
+        headers: []
+        description: Rejected
+      -
+        custom: []
+        status: 404
+        content: '{"success": false, "message": "Payment order not found.", "errors": null}'
         headers: []
         description: ''
       -
         custom: []
-        status: 400
-        content: |-
-          {
-            "success": false,
-            "message": "No active subscription to cancel",
-            "errors": null
-          }
+        status: 409
+        content: '{"success": false, "message": "Only payments awaiting verification can be reviewed.", "errors": null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"success": false, "message": "Validation failed", "errors": {"rejection_reason": ["A rejection reason is required when rejecting a payment."]}}'
         headers: []
         description: ''
     responseFields: []

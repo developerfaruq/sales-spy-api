@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests\Payment;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 class SubmitTxidRequest extends FormRequest
 {
@@ -22,6 +23,7 @@ class SubmitTxidRequest extends FormRequest
                 'min:20',   // TRC20 TXIDs are 64 characters
                 'max:100',
                 'regex:/^[a-fA-F0-9]+$/', // Only hex characters
+                Rule::unique('payment_orders', 'txid')->ignore($this->route('orderId')),
             ],
         ];
     }
@@ -30,7 +32,8 @@ class SubmitTxidRequest extends FormRequest
     {
         return [
             'txid.regex' => 'The transaction ID must be a valid hexadecimal string.',
-            'txid.min'   => 'The transaction ID is too short to be valid.',
+            'txid.min' => 'The transaction ID is too short to be valid.',
+            'txid.unique' => 'This transaction ID has already been submitted for another payment.',
         ];
     }
 
@@ -39,7 +42,7 @@ class SubmitTxidRequest extends FormRequest
         return [
             'txid' => [
                 'description' => 'The blockchain transaction hash from TronScan.',
-                'example'     => 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
+                'example' => 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
             ],
         ];
     }
@@ -50,7 +53,7 @@ class SubmitTxidRequest extends FormRequest
             response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors'  => $validator->errors(),
+                'errors' => $validator->errors(),
             ], 422)
         );
     }

@@ -33,9 +33,19 @@ class RegistrationRoleTest extends TestCase
 
         $response->assertCreated();
         $response->assertJsonPath('data.user.roles.0', 'user');
+        $response->assertJsonPath('data.user.plan', 'free');
+        $response->assertJsonPath('data.user.credits_balance', 50);
 
         $user = User::findOrFail($response->json('data.user.id'));
 
         $this->assertTrue($user->hasRole('user'));
+        $this->assertSame(50, $user->credits_balance);
+        $this->assertSame(50, $user->credits_monthly_quota);
+        $this->assertSame('free', $user->activeSubscription?->plan?->slug);
+        $this->assertDatabaseHas('credit_transactions', [
+            'user_id' => $user->id,
+            'type' => 'subscription_grant',
+            'balance_after' => 50,
+        ]);
     }
 }

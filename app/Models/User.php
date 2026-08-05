@@ -4,7 +4,6 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,9 +11,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use App\Models\OAuthProvider;
-use App\Models\NotificationPreference;
-use App\Models\UserActivity;
 
 #[Fillable([
     'name',
@@ -32,7 +28,7 @@ use App\Models\UserActivity;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     protected string $guard_name = 'api';
 
@@ -73,22 +69,32 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserActivity::class)->latest('created_at');
     }
-    //  Helper Methods 
 
-    //Check if user has enough credits for an action
+    public function creditTransactions()
+    {
+        return $this->hasMany(CreditTransaction::class)->latest('created_at');
+    }
+    //  Helper Methods
+
+    // Check if user has enough credits for an action
 
     public function hasCredits(int $amount): bool
     {
-        return $this->credits_balance >= $amount;
+        return $this->hasUnlimitedCredits() || $this->credits_balance >= $amount;
     }
 
-    //Check if user is on a paid plan
+    public function hasUnlimitedCredits(): bool
+    {
+        return $this->credits_monthly_quota === -1;
+    }
+
+    // Check if user is on a paid plan
 
     public function isPaidUser(): bool
     {
         $sub = $this->activeSubscription;
 
-        return $sub && !$sub->plan->isFree();
+        return $sub && ! $sub->plan->isFree();
     }
 
     // Add this relationship
@@ -105,8 +111,6 @@ class User extends Authenticatable
             ->where('current_period_end', '>', now())
             ->latest();
     }
-
-
 
     // Get the user's current plan name
     public function currentPlanSlug(): string

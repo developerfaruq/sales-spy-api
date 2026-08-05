@@ -17,18 +17,20 @@ class Subscription extends Model
         'current_period_end',
         'cancelled_at',
         'expires_at',
+        'credits_reset_at',
         'notes',
     ];
 
     protected function casts(): array
     {
         return [
-            'status'               => SubscriptionStatus::class,
-            'billing_cycle'        => BillingCycle::class,
+            'status' => SubscriptionStatus::class,
+            'billing_cycle' => BillingCycle::class,
             'current_period_start' => 'datetime',
-            'current_period_end'   => 'datetime',
-            'cancelled_at'         => 'datetime',
-            'expires_at'           => 'datetime',
+            'current_period_end' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'credits_reset_at' => 'datetime',
         ];
     }
 

@@ -29,6 +29,7 @@ class PaymentController extends Controller
      * Any existing pending orders for the user are automatically cancelled.
      *
      * @authenticated
+     *
      * @group Payments
      *
      * @bodyParam plan_slug string required The plan slug. Example: pro
@@ -57,7 +58,6 @@ class PaymentController extends Controller
      *     ]
      *   }
      * }
-     *
      * @response 400 {
      *   "success": false,
      *   "message": "Cannot purchase the free plan",
@@ -98,17 +98,17 @@ class PaymentController extends Controller
 
         return $this->successResponse(
             data: [
-                'order_id'       => $result['order']->id,
-                'reference'      => $result['order']->reference,
-                'plan'           => $plan->name,
-                'billing_cycle'  => $request->billing_cycle,
-                'amount'         => $result['amount'],
-                'currency'       => $result['currency'],
-                'network'        => $result['network'],
+                'order_id' => $result['order']->id,
+                'reference' => $result['order']->reference,
+                'plan' => $plan->name,
+                'billing_cycle' => $request->billing_cycle,
+                'amount' => $result['amount'],
+                'currency' => $result['currency'],
+                'network' => $result['network'],
                 'wallet_address' => $result['wallet_address'],
-                'status'         => $result['order']->status->value,
-                'expires_at'     => $result['order']->expires_at,
-                'instructions'   => [
+                'status' => $result['order']->status->value,
+                'expires_at' => $result['order']->expires_at,
+                'instructions' => [
                     "Send exactly {$result['amount']} {$result['currency']} ({$result['network']}) to the wallet address above",
                     'Take a screenshot of the transaction confirmation',
                     'Upload the screenshot using the proof upload endpoint',
@@ -133,9 +133,11 @@ class PaymentController extends Controller
      * has not been approved or rejected.
      *
      * @authenticated
+     *
      * @group Payments
      *
      * @urlParam orderId integer required The payment order ID. Example: 1
+     *
      * @bodyParam proof file required Screenshot image. Max 5MB. Accepted: jpg, jpeg, png, webp.
      *
      * @response 200 {
@@ -148,7 +150,6 @@ class PaymentController extends Controller
      *     "status": "pending"
      *   }
      * }
-     *
      * @response 403 {
      *   "success": false,
      *   "message": "This order cannot accept a proof upload",
@@ -212,9 +213,11 @@ class PaymentController extends Controller
      * the admin will be notified to review.
      *
      * @authenticated
+     *
      * @group Payments
      *
      * @urlParam orderId integer required The payment order ID. Example: 1
+     *
      * @bodyParam txid string required The 64-character hex transaction hash from TronScan. Example: a1b2c3d4e5f6...
      *
      * @response 200 {
@@ -227,7 +230,6 @@ class PaymentController extends Controller
      *     "txid": "a1b2c3d4e5f6..."
      *   }
      * }
-     *
      * @response 422 {
      *   "success": false,
      *   "message": "Please upload a proof screenshot before submitting your TXID.",
@@ -294,6 +296,7 @@ class PaymentController extends Controller
      * newest first. Includes all statuses.
      *
      * @authenticated
+     *
      * @group Payments
      *
      * @response 200 {
@@ -327,7 +330,7 @@ class PaymentController extends Controller
             ->with('plan')
             ->latest()
             ->get()
-            ->map(fn($order) => $this->formatOrder($order));
+            ->map(fn ($order) => $this->formatOrder($order));
 
         return $this->successResponse(
             data: $orders,
@@ -339,6 +342,7 @@ class PaymentController extends Controller
      * Get a single payment order
      *
      * @authenticated
+     *
      * @group Payments
      *
      * @urlParam orderId integer required The payment order ID. Example: 1
@@ -386,19 +390,19 @@ class PaymentController extends Controller
     private function formatOrder(PaymentOrder $order): array
     {
         return [
-            'order_id'         => $order->id,
-            'reference'        => $order->reference,
-            'plan'             => $order->plan?->name,
-            'billing_cycle'    => $order->billing_cycle,
-            'amount'           => $order->amount_in_dollars,
-            'currency'         => $order->currency,
-            'network'          => $order->network,
-            'status'           => $order->status->value,
-            'txid'             => $order->txid,
-            'proof_image_url'  => $order->proof_image_url,
+            'order_id' => $order->id,
+            'reference' => $order->reference,
+            'plan' => $order->plan?->name,
+            'billing_cycle' => $order->billing_cycle->value,
+            'amount' => $order->amount_in_dollars,
+            'currency' => $order->currency,
+            'network' => $order->network,
+            'status' => $order->status->value,
+            'txid' => $order->txid,
+            'proof_image_url' => $order->proof_image_url,
             'rejection_reason' => $order->rejection_reason,
-            'expires_at'       => $order->expires_at,
-            'created_at'       => $order->created_at,
+            'expires_at' => $order->expires_at,
+            'created_at' => $order->created_at,
         ];
     }
 }

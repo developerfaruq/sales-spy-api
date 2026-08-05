@@ -2,29 +2,26 @@
 
 namespace App\Providers;
 
+use App\Services\ActivityService;
+use App\Services\AuthService;
 use App\Services\CloudinaryService;
+use App\Services\CreditService;
+use App\Services\PaymentService;
+use App\Services\ProfileService;
+use App\Services\SubscriptionService;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-
-use App\Services\ActivityService;
-use App\Services\ProfileService;
-use App\Services\AuthService;
-use App\Services\SubscriptionService;
-use App\Services\PaymentService;
-
-
-
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->app->singleton(CloudinaryService::class, function () {
-            return new CloudinaryService();
+            return new CloudinaryService;
         });
 
         $this->app->singleton(ActivityService::class, function () {
-            return new ActivityService();
+            return new ActivityService;
         });
 
         $this->app->singleton(ProfileService::class, function ($app) {
@@ -33,10 +30,14 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(CreditService::class, function () {
+            return new CreditService;
+        });
 
-
-        $this->app->singleton(SubscriptionService::class, function () {
-            return new SubscriptionService();
+        $this->app->singleton(SubscriptionService::class, function ($app) {
+            return new SubscriptionService(
+                $app->make(CreditService::class)
+            );
         });
 
         $this->app->singleton(AuthService::class, function ($app) {

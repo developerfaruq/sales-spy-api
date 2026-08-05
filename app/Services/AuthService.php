@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\OAuthProviderEnum;
 use App\Models\OAuthProvider;
 use App\Models\User;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -24,8 +25,8 @@ class AuthService
     {
         return DB::transaction(function () use ($data): User {
             $user = User::create([
-                'name'     => $data['name'],
-                'email'    => $data['email'],
+                'name' => $data['name'],
+                'email' => $data['email'],
                 'password' => $data['password'],
             ]);
 
@@ -43,11 +44,11 @@ class AuthService
     {
         $user = User::where('email', $email)->first();
 
-        if (!$user || !Hash::check($password, $user->password)) {
+        if (! $user || ! $user->password || ! Hash::check($password, $user->password)) {
             return null;
         }
 
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             return null;
         }
 
@@ -64,43 +65,53 @@ class AuthService
         SocialiteUser $socialiteUser,
         OAuthProviderEnum $provider
     ): User {
+        return DB::transaction(function () use ($socialiteUser, $provider): User {
+            $oauthRecord = OAuthProvider::where('provider', $provider->value)
+                ->where('provider_id', $socialiteUser->getId())
+                ->first();
 
-        // First check if we already have this OAuth link
-        $oauthRecord = OAuthProvider::where('provider', $provider->value)
-            ->where('provider_id', $socialiteUser->getId())
-            ->first();
+            if ($oauthRecord) {
+                $user = $oauthRecord->user;
 
-        if ($oauthRecord) {
-            // Update the access token and return the linked user
-            $oauthRecord->update(['access_token' => $socialiteUser->token]);
-            return $oauthRecord->user;
-        }
+                $this->ensureActive($user);
+                $this->ensureSubscription($user);
+                $oauthRecord->update(['access_token' => $socialiteUser->token]);
 
-        // No OAuth record found — check if email already exists
-        // (User may have registered with email first, now linking Google)
-        $user = User::where('email', $socialiteUser->getEmail())->first();
+                return $user->refresh();
+            }
 
-        if (!$user) {
-            // Brand new user — create their account
-            $user = User::create([
-                'name'              => $socialiteUser->getName(),
-                'email'             => $socialiteUser->getEmail(),
-                'password'          => null, // OAuth users have no password
-                'profile_image_url' => $socialiteUser->getAvatar(),
-                'email_verified_at' => now(), // OAuth emails are pre-verified
+            $email = $socialiteUser->getEmail();
+
+            if (! $email) {
+                throw new AuthenticationException('The OAuth provider did not return an email address.');
+            }
+
+            $user = User::where('email', $email)->first();
+
+            if (! $user) {
+                $user = User::create([
+                    'name' => $socialiteUser->getName() ?: $email,
+                    'email' => $email,
+                    'password' => null,
+                    'profile_image_url' => $socialiteUser->getAvatar(),
+                    'email_verified_at' => now(),
+                ]);
+
+                $this->subscriptionService->assignFreePlan($user);
+            } else {
+                $this->ensureActive($user);
+                $this->ensureSubscription($user);
+            }
+
+            OAuthProvider::create([
+                'user_id' => $user->id,
+                'provider' => $provider->value,
+                'provider_id' => $socialiteUser->getId(),
+                'access_token' => $socialiteUser->token,
             ]);
 
-        }
-
-        // Create the OAuth link between user and provider
-        OAuthProvider::create([
-            'user_id'      => $user->id,
-            'provider'     => $provider->value,
-            'provider_id'  => $socialiteUser->getId(),
-            'access_token' => $socialiteUser->token,
-        ]);
-
-        return $user;
+            return $user->refresh();
+        });
     }
 
     /**
@@ -128,5 +139,19 @@ class AuthService
             description: 'Signed in to account',
             request: $request
         );
+    }
+
+    private function ensureActive(User $user): void
+    {
+        if (! $user->is_active) {
+            throw new AuthenticationException('This account has been deactivated.');
+        }
+    }
+
+    private function ensureSubscription(User $user): void
+    {
+        if (! $user->activeSubscription()->exists()) {
+            $this->subscriptionService->assignFreePlan($user);
+        }
     }
 }

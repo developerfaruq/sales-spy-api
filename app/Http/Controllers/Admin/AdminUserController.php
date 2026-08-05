@@ -17,6 +17,7 @@ class AdminUserController extends Controller
      * Admin access required.
      *
      * @authenticated
+     *
      * @group Admin — Users
      *
      * @queryParam page integer Page number. Example: 1
@@ -74,13 +75,13 @@ class AdminUserController extends Controller
         $users = $query->paginate($perPage);
 
         return $this->successResponse(
-            data: $users->map(fn($user) => $this->formatUser($user)),
+            data: $users->map(fn ($user) => $this->formatUser($user)),
             message: 'Users retrieved successfully',
             meta: [
                 'current_page' => $users->currentPage(),
-                'last_page'    => $users->lastPage(),
-                'per_page'     => $users->perPage(),
-                'total'        => $users->total(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
             ]
         );
     }
@@ -89,6 +90,7 @@ class AdminUserController extends Controller
      * Get a single user's details
      *
      * @authenticated
+     *
      * @group Admin — Users
      *
      * @urlParam userId integer required The user ID. Example: 1
@@ -134,6 +136,7 @@ class AdminUserController extends Controller
      * Deactivated users cannot log in.
      *
      * @authenticated
+     *
      * @group Admin — Users
      *
      * @urlParam userId integer required The user ID. Example: 1
@@ -165,6 +168,10 @@ class AdminUserController extends Controller
 
         $user->update(['is_active' => ! $user->is_active]);
 
+        if (! $user->is_active) {
+            $user->tokens()->delete();
+        }
+
         $status = $user->is_active ? 'activated' : 'deactivated';
 
         return $this->successResponse(
@@ -182,17 +189,17 @@ class AdminUserController extends Controller
         $subscription = $user->activeSubscription;
 
         return [
-            'id'                  => $user->id,
-            'name'                => $user->name,
-            'email'               => $user->email,
-            'roles'               => $user->getRoleNames()->values(),
-            'plan'                => $user->currentPlanSlug(),
-            'credits_balance'     => $user->credits_balance,
-            'is_active'           => $user->is_active,
-            'email_verified'      => ! is_null($user->email_verified_at),
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => $user->getRoleNames()->values(),
+            'plan' => $user->currentPlanSlug(),
+            'credits_balance' => $user->credits_balance,
+            'is_active' => $user->is_active,
+            'email_verified' => ! is_null($user->email_verified_at),
             'subscription_status' => $subscription?->status->value ?? 'none',
-            'subscription_ends'   => $subscription?->current_period_end,
-            'registered_at'       => $user->created_at,
+            'subscription_ends' => $subscription?->current_period_end,
+            'registered_at' => $user->created_at,
         ];
     }
 }

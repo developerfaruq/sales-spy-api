@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-    
+
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-    
+
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -76,6 +76,19 @@
                 <li class="tocify-item level-1" data-unique="authenticating-requests">
                     <a href="#authenticating-requests">Authenticating requests</a>
                 </li>
+                            </ul>
+                    <ul id="tocify-header-admin-payments" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="admin-payments">
+                    <a href="#admin-payments">Admin - Payments</a>
+                </li>
+                                    <ul id="tocify-subheader-admin-payments" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="admin-payments-GETapi-v1-admin-payments">
+                                <a href="#admin-payments-GETapi-v1-admin-payments">List payment orders</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="admin-payments-PUTapi-v1-admin-payments--orderId--review">
+                                <a href="#admin-payments-PUTapi-v1-admin-payments--orderId--review">Review a payment order</a>
+                            </li>
+                                                                        </ul>
                             </ul>
                     <ul id="tocify-header-admin-users" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="admin-users">
@@ -106,6 +119,19 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="authentication-POSTapi-v1-auth-logout">
                                 <a href="#authentication-POSTapi-v1-auth-logout">Logout</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+                    <ul id="tocify-header-credits" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="credits">
+                    <a href="#credits">Credits</a>
+                </li>
+                                    <ul id="tocify-subheader-credits" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="credits-GETapi-v1-user-credits">
+                                <a href="#credits-GETapi-v1-user-credits">Get credit balance</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="credits-GETapi-v1-user-credits-history">
+                                <a href="#credits-GETapi-v1-user-credits-history">Get credit transaction history</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -230,7 +256,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: August 3, 2026</li>
+        <li>Last updated: August 5, 2026</li>
     </ul>
 </div>
 
@@ -329,9 +355,499 @@ Costs per action:</p>
 <pre><code>Authorization: Bearer 1|xxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
 <p>Tokens do not expire automatically. They are invalidated when you call <code>POST /api/v1/auth/logout</code>.</p>
 
-        <h1 id="admin-users">Admin — Users</h1>
+        <h1 id="admin-payments">Admin - Payments</h1>
 
-    
+
+
+                                <h2 id="admin-payments-GETapi-v1-admin-payments">List payment orders</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns payment orders across all users, newest first. Results can be
+filtered by status or plan and searched by payment or user details.</p>
+
+<span id="example-requests-GETapi-v1-admin-payments">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8000/api/v1/admin/payments?status=awaiting_verification&amp;plan=pro&amp;search=SPY-2026&amp;per_page=25" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/admin/payments"
+);
+
+const params = {
+    "status": "awaiting_verification",
+    "plan": "pro",
+    "search": "SPY-2026",
+    "per_page": "25",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-admin-payments">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Payment orders retrieved successfully&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;order_id&quot;: 42,
+            &quot;reference&quot;: &quot;SPY-2026-00042&quot;,
+            &quot;user&quot;: {
+                &quot;id&quot;: 7,
+                &quot;name&quot;: &quot;Jane Doe&quot;,
+                &quot;email&quot;: &quot;jane@example.com&quot;
+            },
+            &quot;plan&quot;: {
+                &quot;slug&quot;: &quot;pro&quot;,
+                &quot;name&quot;: &quot;Pro&quot;
+            },
+            &quot;billing_cycle&quot;: &quot;monthly&quot;,
+            &quot;amount&quot;: 50,
+            &quot;currency&quot;: &quot;USDT&quot;,
+            &quot;network&quot;: &quot;TRC20&quot;,
+            &quot;status&quot;: &quot;awaiting_verification&quot;,
+            &quot;txid&quot;: &quot;a1b2c3d4e5f6&quot;,
+            &quot;proof_image_url&quot;: &quot;https://res.cloudinary.com/example/proof.png&quot;,
+            &quot;reviewer&quot;: null,
+            &quot;reviewed_at&quot;: null,
+            &quot;rejection_reason&quot;: null,
+            &quot;expires_at&quot;: &quot;2026-08-06T12:00:00.000000Z&quot;,
+            &quot;created_at&quot;: &quot;2026-08-05T12:00:00.000000Z&quot;
+        }
+    ],
+    &quot;meta&quot;: {
+        &quot;current_page&quot;: 1,
+        &quot;last_page&quot;: 1,
+        &quot;per_page&quot;: 25,
+        &quot;total&quot;: 1
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Unauthorized. Admin access required.&quot;,
+    &quot;errors&quot;: null
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-admin-payments" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-admin-payments"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-admin-payments"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-admin-payments" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-admin-payments">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-admin-payments" data-method="GET"
+      data-path="api/v1/admin/payments"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-admin-payments', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-admin-payments"
+                    onclick="tryItOut('GETapi-v1-admin-payments');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-admin-payments"
+                    onclick="cancelTryOut('GETapi-v1-admin-payments');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-admin-payments"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/admin/payments</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-admin-payments"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-admin-payments"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-admin-payments"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>status</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="status"                data-endpoint="GETapi-v1-admin-payments"
+               value="awaiting_verification"
+               data-component="query">
+    <br>
+<p>Filter by payment status. Example: <code>awaiting_verification</code></p>
+Must be one of:
+<ul style="list-style-type: square;"><li><code>pending</code></li> <li><code>awaiting_verification</code></li> <li><code>approved</code></li> <li><code>rejected</code></li> <li><code>expired</code></li></ul>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>plan</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="plan"                data-endpoint="GETapi-v1-admin-payments"
+               value="pro"
+               data-component="query">
+    <br>
+<p>Filter by plan slug. The <code>slug</code> of an existing record in the plans table. Example: <code>pro</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="search"                data-endpoint="GETapi-v1-admin-payments"
+               value="SPY-2026"
+               data-component="query">
+    <br>
+<p>Search by order reference, TXID, user name, or user email. Must not be greater than 255 characters. Example: <code>SPY-2026</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>per_page</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="per_page"                data-endpoint="GETapi-v1-admin-payments"
+               value="25"
+               data-component="query">
+    <br>
+<p>Results per page. Maximum 100. Must be at least 1. Must not be greater than 100. Example: <code>25</code></p>
+            </div>
+                </form>
+
+                    <h2 id="admin-payments-PUTapi-v1-admin-payments--orderId--review">Review a payment order</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Approves or rejects an order awaiting verification. Approval activates
+the purchased subscription and resets credits to the selected plan quota.
+Each order can be reviewed only once.</p>
+
+<span id="example-requests-PUTapi-v1-admin-payments--orderId--review">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PUT \
+    "http://localhost:8000/api/v1/admin/payments/42/review" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"decision\": \"approved\",
+    \"rejection_reason\": \"The submitted TXID could not be verified on TronScan.\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/admin/payments/42/review"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "decision": "approved",
+    "rejection_reason": "The submitted TXID could not be verified on TronScan."
+};
+
+fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PUTapi-v1-admin-payments--orderId--review">
+            <blockquote>
+            <p>Example response (200, Approved):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Payment approved and subscription activated successfully&quot;,
+    &quot;data&quot;: {
+        &quot;order_id&quot;: 42,
+        &quot;reference&quot;: &quot;SPY-2026-00042&quot;,
+        &quot;status&quot;: &quot;approved&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (200, Rejected):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Payment rejected successfully&quot;,
+    &quot;data&quot;: {
+        &quot;order_id&quot;: 42,
+        &quot;reference&quot;: &quot;SPY-2026-00042&quot;,
+        &quot;status&quot;: &quot;rejected&quot;,
+        &quot;rejection_reason&quot;: &quot;TXID could not be verified&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Payment order not found.&quot;,
+    &quot;errors&quot;: null
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (409):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Only payments awaiting verification can be reviewed.&quot;,
+    &quot;errors&quot;: null
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Validation failed&quot;,
+    &quot;errors&quot;: {
+        &quot;rejection_reason&quot;: [
+            &quot;A rejection reason is required when rejecting a payment.&quot;
+        ]
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PUTapi-v1-admin-payments--orderId--review" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PUTapi-v1-admin-payments--orderId--review"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PUTapi-v1-admin-payments--orderId--review"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PUTapi-v1-admin-payments--orderId--review" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PUTapi-v1-admin-payments--orderId--review">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PUTapi-v1-admin-payments--orderId--review" data-method="PUT"
+      data-path="api/v1/admin/payments/{orderId}/review"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PUTapi-v1-admin-payments--orderId--review', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-PUTapi-v1-admin-payments--orderId--review"
+                    onclick="tryItOut('PUTapi-v1-admin-payments--orderId--review');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-PUTapi-v1-admin-payments--orderId--review"
+                    onclick="cancelTryOut('PUTapi-v1-admin-payments--orderId--review');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-PUTapi-v1-admin-payments--orderId--review"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-darkblue">PUT</small>
+            <b><code>api/v1/admin/payments/{orderId}/review</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PUTapi-v1-admin-payments--orderId--review"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PUTapi-v1-admin-payments--orderId--review"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PUTapi-v1-admin-payments--orderId--review"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>orderId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="orderId"                data-endpoint="PUTapi-v1-admin-payments--orderId--review"
+               value="42"
+               data-component="url">
+    <br>
+<p>The payment order ID. Example: <code>42</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>decision</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="decision"                data-endpoint="PUTapi-v1-admin-payments--orderId--review"
+               value="approved"
+               data-component="body">
+    <br>
+<p>The admin review decision. Accepted values: approved, rejected. Example: <code>approved</code></p>
+Must be one of:
+<ul style="list-style-type: square;"><li><code>approved</code></li> <li><code>rejected</code></li></ul>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>rejection_reason</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="rejection_reason"                data-endpoint="PUTapi-v1-admin-payments--orderId--review"
+               value="The submitted TXID could not be verified on TronScan."
+               data-component="body">
+    <br>
+<p>Required when decision is rejected; prohibited when approved. Must not be greater than 1000 characters. Example: <code>The submitted TXID could not be verified on TronScan.</code></p>
+        </div>
+        </form>
+
+                <h1 id="admin-users">Admin — Users</h1>
+
 
                                 <h2 id="admin-users-GETapi-v1-admin-users">List all registered users</h2>
 
@@ -864,7 +1380,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="authentication">Authentication</h1>
 
-    
 
                                 <h2 id="authentication-POSTapi-v1-auth-register">Register a new user</h2>
 
@@ -1403,6 +1918,377 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Example: <code>application/json</code></p>
             </div>
                         </form>
+
+                <h1 id="credits">Credits</h1>
+
+
+                                <h2 id="credits-GETapi-v1-user-credits">Get credit balance</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns the authenticated user's current credit allowance, next reset
+date, and the configured costs for credit-consuming actions.</p>
+
+<span id="example-requests-GETapi-v1-user-credits">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8000/api/v1/user/credits" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/user/credits"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-user-credits">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Credit balance retrieved successfully&quot;,
+    &quot;data&quot;: {
+        &quot;balance&quot;: 50,
+        &quot;monthly_quota&quot;: 50,
+        &quot;unlimited&quot;: false,
+        &quot;next_reset_at&quot;: &quot;2026-09-05T12:00:00.000000Z&quot;,
+        &quot;costs&quot;: {
+            &quot;website_access&quot;: 1,
+            &quot;search_result&quot;: 1,
+            &quot;export_row&quot;: 2,
+            &quot;deep_scan&quot;: 5
+        }
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-user-credits" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-user-credits"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-user-credits"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-user-credits" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-user-credits">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-user-credits" data-method="GET"
+      data-path="api/v1/user/credits"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-user-credits', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-user-credits"
+                    onclick="tryItOut('GETapi-v1-user-credits');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-user-credits"
+                    onclick="cancelTryOut('GETapi-v1-user-credits');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-user-credits"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/user/credits</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-user-credits"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-user-credits"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-user-credits"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        </form>
+
+                    <h2 id="credits-GETapi-v1-user-credits-history">Get credit transaction history</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns the authenticated user's immutable credit ledger, newest first.
+Results can be filtered by transaction type and date range.</p>
+
+<span id="example-requests-GETapi-v1-user-credits-history">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8000/api/v1/user/credits/history?type=spend&amp;from=2026-08-01&amp;to=2026-08-31&amp;per_page=25" \
+    --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8000/api/v1/user/credits/history"
+);
+
+const params = {
+    "type": "spend",
+    "from": "2026-08-01",
+    "to": "2026-08-31",
+    "per_page": "25",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-user-credits-history">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: true,
+    &quot;message&quot;: &quot;Credit history retrieved successfully&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: 10,
+            &quot;type&quot;: &quot;spend&quot;,
+            &quot;amount&quot;: -5,
+            &quot;absolute_amount&quot;: 5,
+            &quot;is_deduction&quot;: true,
+            &quot;balance_before&quot;: 50,
+            &quot;balance_after&quot;: 45,
+            &quot;description&quot;: &quot;Deep store scan&quot;,
+            &quot;reference_type&quot;: &quot;store_scan&quot;,
+            &quot;reference_id&quot;: &quot;42&quot;,
+            &quot;metadata&quot;: null,
+            &quot;created_at&quot;: &quot;2026-08-05T12:00:00.000000Z&quot;
+        }
+    ],
+    &quot;meta&quot;: {
+        &quot;current_page&quot;: 1,
+        &quot;last_page&quot;: 1,
+        &quot;per_page&quot;: 25,
+        &quot;total&quot;: 1
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-user-credits-history" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-user-credits-history"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-user-credits-history"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-user-credits-history" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-user-credits-history">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-user-credits-history" data-method="GET"
+      data-path="api/v1/user/credits/history"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-user-credits-history', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-user-credits-history"
+                    onclick="tryItOut('GETapi-v1-user-credits-history');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-user-credits-history"
+                    onclick="cancelTryOut('GETapi-v1-user-credits-history');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-user-credits-history"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/user/credits/history</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-user-credits-history"
+               value="Bearer {YOUR_AUTH_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-user-credits-history"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-user-credits-history"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>type</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="type"                data-endpoint="GETapi-v1-user-credits-history"
+               value="spend"
+               data-component="query">
+    <br>
+<p>Filter transactions by type. Example: <code>spend</code></p>
+Must be one of:
+<ul style="list-style-type: square;"><li><code>opening_balance</code></li> <li><code>subscription_grant</code></li> <li><code>monthly_reset</code></li> <li><code>spend</code></li> <li><code>refund</code></li> <li><code>admin_adjustment</code></li></ul>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>from</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="from"                data-endpoint="GETapi-v1-user-credits-history"
+               value="2026-08-01"
+               data-component="query">
+    <br>
+<p>Include transactions on or after this date (YYYY-MM-DD). Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-08-01</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="to"                data-endpoint="GETapi-v1-user-credits-history"
+               value="2026-08-31"
+               data-component="query">
+    <br>
+<p>Include transactions on or before this date (YYYY-MM-DD). Must be a valid date in the format <code>Y-m-d</code>. Must be a date after or equal to <code>from</code>. Example: <code>2026-08-31</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>per_page</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="per_page"                data-endpoint="GETapi-v1-user-credits-history"
+               value="25"
+               data-component="query">
+    <br>
+<p>Results per page. Maximum 100. Must be at least 1. Must not be greater than 100. Example: <code>25</code></p>
+            </div>
+                </form>
 
                 <h1 id="general">General</h1>
 
@@ -2057,6 +2943,8 @@ fetch(url, {
             <pre><code class="language-http">cache-control: no-cache, private
 location: https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code
 content-type: text/html; charset=utf-8
+x-ratelimit-limit: 20
+x-ratelimit-remaining: 19
 x-content-type-options: nosniff
 x-frame-options: DENY
 x-xss-protection: 1; mode=block
@@ -2864,7 +3752,7 @@ has not been approved or rejected.</p>
     --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
-    --form "proof=@/tmp/php9Saj7E" </code></pre></div>
+    --form "proof=@/tmp/phpKqqD8b" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -3025,7 +3913,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Screenshot image. Max 5MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/php9Saj7E</code></p>
+<p>Screenshot image. Max 5MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/phpKqqD8b</code></p>
         </div>
         </form>
 
@@ -4027,7 +4915,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
-    --form "avatar=@/tmp/php3d0xu1" </code></pre></div>
+    --form "avatar=@/tmp/phpYLFCRv" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -4161,7 +5049,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The image file. Max 2MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/php3d0xu1</code></p>
+<p>The image file. Max 2MB. Accepted: jpg, jpeg, png, webp. Example: <code>/tmp/phpYLFCRv</code></p>
         </div>
         </form>
 

@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Enums\OAuthProviderEnum;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Services\AuthService;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
@@ -17,9 +18,9 @@ class AuthController extends Controller
         protected AuthService $authService
     ) {}
 
-    //Email & Password Auth
+    // Email & Password Auth
 
-    //POST /api/v1/auth/register
+    // POST /api/v1/auth/register
 
     /**
      * Register a new user
@@ -28,6 +29,7 @@ class AuthController extends Controller
      * The user is assigned the free plan with 50 starter credits.
      *
      * @unauthenticated
+     *
      * @group Authentication
      *
      * @bodyParam name string required The user's full name. Example: John Doe
@@ -49,7 +51,6 @@ class AuthController extends Controller
      *     }
      *   }
      * }
-     *
      * @response 422 {
      *   "success": false,
      *   "message": "Validation failed",
@@ -59,21 +60,20 @@ class AuthController extends Controller
      *   }
      * }
      */
-
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user  = $this->authService->register($request->validated());
+        $user = $this->authService->register($request->validated());
         $token = $this->authService->generateToken($user);
 
         return $this->successResponse(
             data: [
                 'token' => $token,
                 'user' => [
-                    'id'              => $user->id,
-                    'name'            => $user->name,
-                    'email'           => $user->email,
-                    'roles'           => $user->getRoleNames()->values(),
-                    'plan'            => $user->currentPlanSlug(),
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'roles' => $user->getRoleNames()->values(),
+                    'plan' => $user->currentPlanSlug(),
                     'credits_balance' => $user->credits_balance,
                 ],
             ],
@@ -82,7 +82,7 @@ class AuthController extends Controller
         );
     }
 
-    //POST /api/v1/auth/login
+    // POST /api/v1/auth/login
     /**
      * Login
      *
@@ -90,6 +90,7 @@ class AuthController extends Controller
      * to use in all subsequent protected requests.
      *
      * @unauthenticated
+     *
      * @group Authentication
      *
      * @bodyParam email string required Your account email. Example: john@example.com
@@ -109,7 +110,6 @@ class AuthController extends Controller
      *     }
      *   }
      * }
-     *
      * @response 401 {
      *   "success": false,
      *   "message": "Invalid email or password",
@@ -123,7 +123,7 @@ class AuthController extends Controller
             $request->password
         );
 
-        if (!$user) {
+        if (! $user) {
             return $this->errorResponse(
                 message: 'Invalid email or password',
                 statusCode: 401
@@ -131,16 +131,17 @@ class AuthController extends Controller
         }
 
         $token = $this->authService->generateToken($user);
+        $this->authService->logLogin($user, $request);
 
         return $this->successResponse(
             data: [
                 'token' => $token,
-                'user'  => [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
                     'email' => $user->email,
                     'roles' => $user->getRoleNames()->values(),
-                    'plan'  => $user->plan,
+                    'plan' => $user->currentPlanSlug(),
                     'credits_balance' => $user->credits_balance,
                 ],
             ],
@@ -148,7 +149,7 @@ class AuthController extends Controller
         );
     }
 
-    //POST /api/v1/auth/logout
+    // POST /api/v1/auth/logout
 
     /**
      * Logout
@@ -157,6 +158,7 @@ class AuthController extends Controller
      * used again after this call. The user must login again to get a new token.
      *
      * @authenticated
+     *
      * @group Authentication
      *
      * @response 200 {
@@ -164,7 +166,6 @@ class AuthController extends Controller
      *   "message": "Logged out successfully",
      *   "data": null
      * }
-     *
      * @response 401 {
      *   "message": "Unauthenticated."
      * }
@@ -178,8 +179,8 @@ class AuthController extends Controller
             message: 'Logged out successfully'
         );
     }
-    //GET /api/v1/auth/me
-    //Returns the currently authenticated user
+    // GET /api/v1/auth/me
+    // Returns the currently authenticated user
     /**
      * Get authenticated user
      *
@@ -187,6 +188,7 @@ class AuthController extends Controller
      * Use this after login to populate the dashboard with user data.
      *
      * @authenticated
+     *
      * @group Authentication
      *
      * @response 200 {
@@ -204,7 +206,6 @@ class AuthController extends Controller
      *     "created_at": "2026-03-24T10:00:00.000000Z"
      *   }
      * }
-     *
      * @response 401 {
      *   "message": "Unauthenticated."
      * }
@@ -231,7 +232,7 @@ class AuthController extends Controller
     // }
 
     // OAuth
-    //GET /api/v1/auth/{provider}/redirect
+    // GET /api/v1/auth/{provider}/redirect
 
     /**
      * OAuth Redirect
@@ -241,22 +242,32 @@ class AuthController extends Controller
      * After the user authenticates, they are sent to the callback endpoint.
      *
      * @unauthenticated
+     *
      * @group OAuth
      *
      * @urlParam provider string required The OAuth provider. Accepted: google, github. Example: google
      *
      * @response 302 scenario="Redirects to provider login page" {}
      */
-    //Redirects user to Google or GitHub login page
+    // Redirects user to Google or GitHub login page
 
     public function oauthRedirect(string $provider)
     {
-        return Socialite::driver($provider)
+        $providerEnum = OAuthProviderEnum::tryFrom($provider);
+
+        if (! $providerEnum) {
+            return $this->errorResponse(
+                message: 'Unsupported OAuth provider',
+                statusCode: 400
+            );
+        }
+
+        return Socialite::driver($providerEnum->value)
             ->stateless()
             ->redirect();
     }
-    //GET /api/v1/auth/{provider}/callback
-    //Google/GitHub sends the user back here after login
+    // GET /api/v1/auth/{provider}/callback
+    // Google/GitHub sends the user back here after login
 
     /**
      * OAuth Callback
@@ -266,6 +277,7 @@ class AuthController extends Controller
      * The frontend should redirect here and extract the token from the response.
      *
      * @unauthenticated
+     *
      * @group OAuth
      *
      * @urlParam provider string required The OAuth provider. Accepted: google, github. Example: google
@@ -284,36 +296,35 @@ class AuthController extends Controller
      *     }
      *   }
      * }
-     *
      * @response 400 {
      *   "success": false,
      *   "message": "Unsupported OAuth provider",
      *   "errors": null
      * }
-     *
      * @response 500 {
      *   "success": false,
      *   "message": "OAuth authentication failed",
      *   "errors": null
      * }
      */
-    public function oauthCallback(string $provider): JsonResponse
+    public function oauthCallback(Request $request, string $provider): JsonResponse
     {
         try {
-            $providerEnum     = OAuthProviderEnum::from($provider);
-            $socialiteUser    = Socialite::driver($provider)->stateless()->user();
-            $user             = $this->authService->findOrCreateOAuthUser($socialiteUser, $providerEnum);
-            $token            = $this->authService->generateToken($user);
+            $providerEnum = OAuthProviderEnum::from($provider);
+            $socialiteUser = Socialite::driver($provider)->stateless()->user();
+            $user = $this->authService->findOrCreateOAuthUser($socialiteUser, $providerEnum);
+            $token = $this->authService->generateToken($user);
+            $this->authService->logLogin($user, $request);
 
             return $this->successResponse(
                 data: [
                     'token' => $token,
-                    'user'  => [
-                        'id'    => $user->id,
-                        'name'  => $user->name,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
                         'email' => $user->email,
                         'roles' => $user->getRoleNames()->values(),
-                        'plan'  => $user->plan,
+                        'plan' => $user->currentPlanSlug(),
                         'credits_balance' => $user->credits_balance,
                     ],
                 ],
@@ -323,6 +334,11 @@ class AuthController extends Controller
             return $this->errorResponse(
                 message: 'Unsupported OAuth provider',
                 statusCode: 400
+            );
+        } catch (AuthenticationException $e) {
+            return $this->errorResponse(
+                message: $e->getMessage(),
+                statusCode: 403
             );
         } catch (\Exception $e) {
             return $this->errorResponse(

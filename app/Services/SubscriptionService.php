@@ -3,14 +3,19 @@
 namespace App\Services;
 
 use App\Enums\BillingCycle;
+use App\Enums\CreditTransactionType;
 use App\Enums\SubscriptionStatus;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class SubscriptionService
 {
+    public function __construct(
+        protected CreditService $creditService
+    ) {}
+
     /**
      * Assign the free plan to a newly registered user.
      * Called from AuthService after registration.
@@ -19,54 +24,73 @@ class SubscriptionService
     {
         $freePlan = Plan::where('slug', 'free')->firstOrFail();
 
-        return Subscription::create([
-            'user_id'              => $user->id,
-            'plan_id'              => $freePlan->id,
-            'billing_cycle'        => BillingCycle::MONTHLY,
-            'status'               => SubscriptionStatus::ACTIVE,
+        $subscription = Subscription::create([
+            'user_id' => $user->id,
+            'plan_id' => $freePlan->id,
+            'billing_cycle' => BillingCycle::MONTHLY,
+            'status' => SubscriptionStatus::ACTIVE,
             'current_period_start' => now(),
-            'current_period_end'   => now()->addMonth(),
+            'current_period_end' => now()->addMonth(),
+            'credits_reset_at' => now()->addMonth(),
         ]);
+
+        $this->creditService->grantPlanCredits(
+            user: $user,
+            plan: $freePlan,
+            type: CreditTransactionType::SUBSCRIPTION_GRANT,
+            description: 'Free plan credits granted',
+            idempotencyKey: "subscription:{$subscription->id}:grant",
+            referenceType: Subscription::class,
+            referenceId: $subscription->id
+        );
+
+        return $subscription;
     }
 
     /**
      * Activate a subscription after a payment is verified.
      * Called from PaymentService in Phase 5.
      *
-     * @param User   $user
-     * @param Plan   $plan
-     * @param string $billingCycle monthly|yearly
+     * @param  string  $billingCycle  monthly|yearly
      */
     public function activateSubscription(
         User $user,
         Plan $plan,
         string $billingCycle
     ): Subscription {
-        // Cancel any existing active subscription
-        $this->cancelExistingSubscription($user);
+        return DB::transaction(function () use ($user, $plan, $billingCycle): Subscription {
+            $lockedUser = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
 
-        $periodEnd = $billingCycle === 'yearly'
-            ? now()->addYear()
-            : now()->addMonth();
+            $this->cancelExistingSubscription($lockedUser);
 
-        $subscription = Subscription::create([
-            'user_id'              => $user->id,
-            'plan_id'              => $plan->id,
-            'billing_cycle'        => $billingCycle,
-            'status'               => SubscriptionStatus::ACTIVE,
-            'current_period_start' => now(),
-            'current_period_end'   => $periodEnd,
-        ]);
+            $periodEnd = $billingCycle === BillingCycle::YEARLY->value
+                ? now()->addYear()
+                : now()->addMonth();
 
-        // Reset user credits to new plan's monthly quota
-        $user->update([
-            'credits_balance'       => $plan->monthly_quota === -1
-                ? 99999  // Unlimited represented as large number
-                : $plan->monthly_quota,
-            'credits_monthly_quota' => $plan->monthly_quota,
-        ]);
+            $subscription = Subscription::create([
+                'user_id' => $lockedUser->id,
+                'plan_id' => $plan->id,
+                'billing_cycle' => $billingCycle,
+                'status' => SubscriptionStatus::ACTIVE,
+                'current_period_start' => now(),
+                'current_period_end' => $periodEnd,
+                'credits_reset_at' => $billingCycle === BillingCycle::YEARLY->value
+                    ? now()->addMonthNoOverflow()
+                    : $periodEnd,
+            ]);
 
-        return $subscription;
+            $this->creditService->grantPlanCredits(
+                user: $lockedUser,
+                plan: $plan,
+                type: CreditTransactionType::SUBSCRIPTION_GRANT,
+                description: "{$plan->name} plan credits granted",
+                idempotencyKey: "subscription:{$subscription->id}:grant",
+                referenceType: Subscription::class,
+                referenceId: $subscription->id
+            );
+
+            return $subscription;
+        });
     }
 
     /**
@@ -77,14 +101,17 @@ class SubscriptionService
     {
         $subscription = $user->activeSubscription;
 
-        if (!$subscription) {
+        if (! $subscription
+            || $subscription->plan->isFree()
+            || ! in_array($subscription->status, [SubscriptionStatus::ACTIVE, SubscriptionStatus::TRIAL], true)
+        ) {
             return false;
         }
 
         $subscription->update([
-            'status'       => SubscriptionStatus::CANCELLED,
+            'status' => SubscriptionStatus::CANCELLED,
             'cancelled_at' => now(),
-            'expires_at'   => $subscription->current_period_end,
+            'expires_at' => $subscription->current_period_end,
         ]);
 
         return true;
@@ -96,28 +123,93 @@ class SubscriptionService
      */
     public function expireSubscription(Subscription $subscription): void
     {
-        $subscription->update([
-            'status'     => SubscriptionStatus::EXPIRED,
-            'expires_at' => now(),
-        ]);
+        DB::transaction(function () use ($subscription): void {
+            $lockedSubscription = Subscription::whereKey($subscription->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $freePlan = Plan::where('slug', 'free')->firstOrFail();
+            if (! in_array($lockedSubscription->status, [SubscriptionStatus::ACTIVE, SubscriptionStatus::CANCELLED], true)) {
+                return;
+            }
 
-        // Assign a new free plan subscription
-        Subscription::create([
-            'user_id'              => $subscription->user_id,
-            'plan_id'              => $freePlan->id,
-            'billing_cycle'        => BillingCycle::MONTHLY,
-            'status'               => SubscriptionStatus::ACTIVE,
-            'current_period_start' => now(),
-            'current_period_end'   => now()->addMonth(),
-        ]);
+            $lockedSubscription->update([
+                'status' => SubscriptionStatus::EXPIRED,
+                'expires_at' => now(),
+            ]);
 
-        // Reset credits to free plan quota
-        $subscription->user->update([
-            'credits_balance'       => $freePlan->monthly_quota,
-            'credits_monthly_quota' => $freePlan->monthly_quota,
-        ]);
+            $hasCurrentSubscription = Subscription::where('user_id', $lockedSubscription->user_id)
+                ->whereKeyNot($lockedSubscription->id)
+                ->whereIn('status', [
+                    SubscriptionStatus::ACTIVE,
+                    SubscriptionStatus::CANCELLED,
+                    SubscriptionStatus::TRIAL,
+                ])
+                ->where('current_period_end', '>', now())
+                ->exists();
+
+            if (! $hasCurrentSubscription) {
+                $this->assignFreePlan($lockedSubscription->user);
+            }
+        });
+    }
+
+    public function renewFreeSubscription(Subscription $subscription): void
+    {
+        DB::transaction(function () use ($subscription): void {
+            $lockedSubscription = Subscription::whereKey($subscription->id)
+                ->lockForUpdate()
+                ->with('plan', 'user')
+                ->firstOrFail();
+
+            if (! $lockedSubscription->plan->isFree()
+                || ! in_array($lockedSubscription->status, [SubscriptionStatus::ACTIVE, SubscriptionStatus::CANCELLED], true)
+            ) {
+                return;
+            }
+
+            $hasCurrentSubscription = Subscription::where('user_id', $lockedSubscription->user_id)
+                ->whereKeyNot($lockedSubscription->id)
+                ->whereIn('status', [
+                    SubscriptionStatus::ACTIVE,
+                    SubscriptionStatus::CANCELLED,
+                    SubscriptionStatus::TRIAL,
+                ])
+                ->where('current_period_end', '>', now())
+                ->exists();
+
+            if ($hasCurrentSubscription) {
+                $lockedSubscription->update([
+                    'status' => SubscriptionStatus::EXPIRED,
+                    'expires_at' => now(),
+                ]);
+
+                return;
+            }
+
+            $resetAt = $lockedSubscription->credits_reset_at
+                ?? $lockedSubscription->current_period_end;
+
+            $newPeriodEnd = now()->addMonth();
+
+            $lockedSubscription->update([
+                'status' => SubscriptionStatus::ACTIVE,
+                'current_period_start' => now(),
+                'current_period_end' => $newPeriodEnd,
+                'credits_reset_at' => $newPeriodEnd,
+                'cancelled_at' => null,
+                'expires_at' => null,
+            ]);
+
+            $this->creditService->grantPlanCredits(
+                user: $lockedSubscription->user,
+                plan: $lockedSubscription->plan,
+                type: CreditTransactionType::MONTHLY_RESET,
+                description: 'Monthly Free plan credit reset',
+                idempotencyKey: "subscription:{$lockedSubscription->id}:reset:{$resetAt->timestamp}",
+                referenceType: Subscription::class,
+                referenceId: $lockedSubscription->id
+            );
+        });
     }
 
     /**
@@ -126,11 +218,11 @@ class SubscriptionService
      */
     public function resetMonthlyCredits(User $user): void
     {
-        $quota = $user->currentMonthlyQuota();
+        $subscription = $user->activeSubscription;
 
-        $user->update([
-            'credits_balance' => $quota === -1 ? 99999 : $quota,
-        ]);
+        if ($subscription) {
+            $this->creditService->resetSubscriptionCredits($subscription);
+        }
     }
 
     /**
@@ -139,11 +231,15 @@ class SubscriptionService
     private function cancelExistingSubscription(User $user): void
     {
         $user->subscriptions()
-            ->whereIn('status', ['active', 'trial'])
+            ->whereIn('status', [
+                SubscriptionStatus::ACTIVE,
+                SubscriptionStatus::CANCELLED,
+                SubscriptionStatus::TRIAL,
+            ])
             ->update([
-                'status'       => SubscriptionStatus::CANCELLED,
+                'status' => SubscriptionStatus::CANCELLED,
                 'cancelled_at' => now(),
-                'expires_at'   => now(),
+                'expires_at' => now(),
             ]);
     }
 }

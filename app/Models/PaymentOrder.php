@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BillingCycle;
 use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,9 +29,10 @@ class PaymentOrder extends Model
     protected function casts(): array
     {
         return [
-            'status'      => PaymentStatus::class,
+            'status' => PaymentStatus::class,
+            'billing_cycle' => BillingCycle::class,
             'reviewed_at' => 'datetime',
-            'expires_at'  => 'datetime',
+            'expires_at' => 'datetime',
             'amount_usd_cents' => 'integer',
         ];
     }

@@ -8,7 +8,8 @@ use Illuminate\Console\Command;
 
 class ExpireSubscriptions extends Command
 {
-    protected $signature   = 'subscriptions:expire';
+    protected $signature = 'subscriptions:expire';
+
     protected $description = 'Expire subscriptions past their end date and downgrade users';
 
     public function handle(SubscriptionService $subscriptionService): void
@@ -25,12 +26,15 @@ class ExpireSubscriptions extends Command
 
         if ($expired->isEmpty()) {
             $this->info('No expired subscriptions found.');
+
             return;
         }
 
         foreach ($expired as $subscription) {
-            // Skip if already on free plan
             if ($subscription->plan->isFree()) {
+                $subscriptionService->renewFreeSubscription($subscription);
+                $this->info("Renewed free subscription for user ID: {$subscription->user_id}");
+
                 continue;
             }
 
