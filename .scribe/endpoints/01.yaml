@@ -44,7 +44,7 @@ endpoints:
       plan:
         custom: []
         name: plan
-        description: 'Filter by plan slug. The <code>slug</code> of an existing record in the plans table.'
+        description: 'Filter by plan slug. Must match an existing stored value.'
         required: false
         example: pro
         type: string

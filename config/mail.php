@@ -45,7 +45,11 @@ return [
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            // Mail is sent inside the request, so an unbounded socket wait lets
+            // one unreachable SMTP host pin PHP-FPM workers. Laravel only calls
+            // setTimeout() when this key is non-null; leaving it null falls back
+            // to default_socket_timeout (60s) on every read of the session.
+            'timeout' => (float) env('MAIL_TIMEOUT', 5),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 

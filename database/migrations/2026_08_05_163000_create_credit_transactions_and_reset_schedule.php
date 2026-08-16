@@ -90,6 +90,12 @@ return new class extends Migration
             $table->integer('credits_monthly_quota')->default(50)->change();
         });
 
+        // The index must go before the column it covers: SQLite refuses to drop
+        // an indexed column, which aborted this rollback.
+        Schema::table('subscriptions', function (Blueprint $table): void {
+            $table->dropIndex(['credits_reset_at']);
+        });
+
         Schema::table('subscriptions', function (Blueprint $table): void {
             $table->dropColumn('credits_reset_at');
         });

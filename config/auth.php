@@ -43,7 +43,7 @@ return [
             'provider' => 'users',
         ],
         'api' => [
-            'driver'   => 'sanctum',
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
     ],
@@ -117,5 +117,20 @@ return [
     */
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email Verification
+    |--------------------------------------------------------------------------
+    |
+    | Lifetime, in minutes, of the signed link in the verification email. Read by
+    | VerifyEmailNotification for both the signature expiry and the wording of
+    | the email, so the two can never disagree.
+    |
+    */
+
+    'verification' => [
+        'expire' => env('AUTH_VERIFICATION_EXPIRE', 60),
+    ],
 
 ];

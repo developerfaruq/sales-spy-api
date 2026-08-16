@@ -1,28 +1,149 @@
-name: General
+name: 'Admin — Leads'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
-      - GET
-    uri: api/v1/health
+      - POST
+    uri: api/v1/admin/leads/enqueue
     metadata:
       custom: []
-      groupName: General
+      groupName: 'Admin — Leads'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Health Check'
+      title: 'Queue domains for crawling'
       description: |-
-        Check if the API is online. No authentication required.
-        Use this to verify the server is reachable before making other calls.
-      authenticated: false
+        Inserts each domain as `pending` with an immediate `next_crawl_at`. The
+        Python worker's beat tick claims them within a minute, then detects the
+        platform, extracts contacts, and — for Shopify — pulls the product
+        catalogue in the same pass.
+
+        This does NOT perform any crawling itself, and it is not bulk discovery.
+        Finding domains from Common Crawl streams a multi-megabyte index and runs
+        in the worker via `discover-common-crawl`, not in a web request.
+
+        Domains already known are reported as `skipped` rather than re-queued, so
+        the call is safe to retry.
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
     cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      domains:
+        custom: []
+        name: domains
+        description: 'Must not be greater than 253 characters.'
+        required: true
+        example:
+          - b
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      source:
+        custom: []
+        name: source
+        description: 'Provenance label stored on each row. Must contain only letters, numbers, dashes and underscores. Must not be greater than 64 characters.'
+        required: false
+        example: admin
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      domains:
+        - b
+      source: admin
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Domains queued for crawling",
+            "data": {
+              "queued": 2,
+              "skipped": 1,
+              "invalid": ["not a domain"]
+            }
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"success": false, "message": "Admin access required.", "errors": null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "success": false,
+            "message": "Validation failed",
+            "errors": {"domains": ["A maximum of 500 domains can be queued per request."]}
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/admin/leads/{domain}/recrawl'
+    metadata:
+      custom: []
+      groupName: 'Admin — Leads'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Request an immediate re-crawl'
+      description: |-
+        Marks one known domain due now. Also clears `crawl_attempts`, because that
+        counter is the consecutive-failure ceiling the worker filters on — a domain
+        parked as `blocked` would otherwise be set due and then skipped.
+
+        A domain currently being crawled is left untouched: resetting it would
+        strand the worker's claim token and its completion write would be discarded.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      domain:
+        custom: []
+        name: domain
+        description: 'The domain to re-crawl.'
+        required: true
+        example: example-store.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      domain: example-store.com
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -35,16 +156,43 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Sales-Spy API v1 is live",
-            "data": {
-              "version": "1.0.0",
-              "environment": "production"
-            }
+            "message": "Re-crawl requested",
+            "data": {"domain": "example-store.com", "queued": true, "reason": null}
           }
         headers: []
         description: ''
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Re-crawl requested",
+            "data": {
+              "domain": "example-store.com",
+              "queued": false,
+              "reason": "A crawl is already in progress for this domain."
+            }
+          }
+        headers: []
+        description: 'Crawl already running'
+      -
+        custom: []
+        status: 403
+        content: '{"success": false, "message": "Admin access required.", "errors": null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"success": false, "message": "Domain not found.", "errors": null}'
+        headers: []
+        description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
     controller: null
     method: null
     route: null

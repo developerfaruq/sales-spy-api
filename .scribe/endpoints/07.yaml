@@ -1,27 +1,121 @@
-name: Notifications
+name: OAuth
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/user/notifications/preferences
+    uri: 'api/v1/auth/{provider}/redirect'
     metadata:
       custom: []
-      groupName: Notifications
+      groupName: OAuth
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Get the user's notification preferences."
-      description: ''
-      authenticated: true
+      title: 'OAuth Redirect'
+      description: |-
+        Redirects the user to the Google or GitHub login page.
+        Pass `google` or `github` as the provider parameter.
+        After the user authenticates, they are sent to the callback endpoint.
+      authenticated: false
       deprecated: false
     headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
+    urlParameters:
+      provider:
+        custom: []
+        name: provider
+        description: 'The OAuth provider. Accepted: google, github.'
+        required: true
+        example: google
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      provider: google
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 302
+        content: '{}'
+        headers: []
+        description: 'Redirects to provider login page'
+      -
+        custom: []
+        status: 302
+        content: |-
+          <!DOCTYPE html>
+          <html>
+              <head>
+                  <meta charset="UTF-8" />
+                  <meta http-equiv="refresh" content="0;url='https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code'" />
+
+                  <title>Redirecting to https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code</title>
+              </head>
+              <body>
+                  Redirecting to <a href="https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code">https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code</a>.
+              </body>
+          </html>
+        headers:
+          cache-control: 'no-cache, private'
+          location: 'https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&scope=openid+profile+email&response_type=code'
+          content-type: 'text/html; charset=utf-8'
+          x-ratelimit-limit: '20'
+          x-ratelimit-remaining: '19'
+          x-content-type-options: nosniff
+          x-frame-options: DENY
+          x-xss-protection: '1; mode=block'
+          referrer-policy: strict-origin-when-cross-origin
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/auth/{provider}/callback'
+    metadata:
+      custom: []
+      groupName: OAuth
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'OAuth Callback'
+      description: |-
+        Handles the response from Google or GitHub after the user authenticates.
+        Returns a Bearer token exactly like the login endpoint does.
+        The frontend should redirect here and extract the token from the response.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      provider:
+        custom: []
+        name: provider
+        description: 'The OAuth provider. Accepted: google, github.'
+        required: true
+        example: google
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      provider: google
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -34,154 +128,44 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Notification preferences retrieved",
+            "message": "OAuth login successful",
             "data": {
-              "email_on_export_complete": true,
-              "email_on_billing": true,
-              "email_on_new_features": true,
-              "email_on_security_alerts": true,
-              "inapp_on_export_complete": true,
-              "inapp_on_low_credits": true,
-              "inapp_on_scan_complete": true
+              "token": "3|xxxxxxxxxxxxxxxxxxxxxxxx",
+              "user": {
+                "id": 2,
+                "name": "Jane Doe",
+                "email": "jane@gmail.com",
+                "plan": "free",
+                "credits_balance": 50
+              }
             }
           }
         headers: []
         description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - PUT
-    uri: api/v1/user/notifications/preferences
-    metadata:
-      custom: []
-      groupName: Notifications
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: "Update the user's notification preferences."
-      description: ''
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      email_on_export_complete:
-        custom: []
-        name: email_on_export_complete
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email_on_billing:
-        custom: []
-        name: email_on_billing
-        description: optional
-        required: false
-        example: false
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email_on_new_features:
-        custom: []
-        name: email_on_new_features
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email_on_security_alerts:
-        custom: []
-        name: email_on_security_alerts
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      inapp_on_export_complete:
-        custom: []
-        name: inapp_on_export_complete
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      inapp_on_low_credits:
-        custom: []
-        name: inapp_on_low_credits
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      inapp_on_scan_complete:
-        custom: []
-        name: inapp_on_scan_complete
-        description: optional
-        required: false
-        example: false
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      email_on_export_complete: true
-      email_on_billing: false
-      email_on_new_features: true
-      email_on_security_alerts: true
-      inapp_on_export_complete: true
-      inapp_on_low_credits: true
-      inapp_on_scan_complete: false
-    fileParameters: []
-    responses:
       -
         custom: []
-        status: 200
+        status: 400
         content: |-
           {
-            "success": true,
-            "message": "Notification preferences updated",
-            "data": { "email_on_billing": false }
+            "success": false,
+            "message": "Unsupported OAuth provider",
+            "errors": null
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 500
+        content: |-
+          {
+            "success": false,
+            "message": "OAuth authentication failed",
+            "errors": null
           }
         headers: []
         description: ''
     responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    auth: []
     controller: null
     method: null
     route: null

@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         //
         $middleware->append(SecurityHeaders::class);
 
+        // The container runs behind the platform edge proxy, so without this
+        // every client presents the proxy's address and per-IP rate limits
+        // collapse into one shared bucket.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
             'active' => EnsureUserIsActive::class,

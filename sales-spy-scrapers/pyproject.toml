@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sales-spy-scrapers"
+version = "0.1.0"
+description = "Fault-tolerant website and commerce ingestion workers for Sales-Spy"
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.12.3,<5",
+    "celery[redis]>=5.4,<6",
+    "httpx[http2]>=0.28,<1",
+    "lxml>=5.3,<6",
+    "psycopg[binary,pool]>=3.2,<4",
+    "pydantic>=2.10,<3",
+    "pydantic-settings>=2.7,<3",
+    "structlog>=24.4,<26",
+    "typer>=0.15,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.14,<2",
+    "pytest>=8.3,<9",
+    "pytest-asyncio>=0.25,<1",
+    "pytest-cov>=6,<7",
+    "PyYAML>=6,<7",
+    "respx>=0.22,<1",
+    "ruff>=0.9,<1",
+]
+
+[project.scripts]
+sales-spy-scraper = "sales_spy_scrapers.cli:app"
+
+[project.entry-points."sales_spy_scrapers.sources"]
+common_crawl = "sales_spy_scrapers.sources.common_crawl:CommonCrawlSource"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sales_spy_scrapers"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers --disable-warnings --cov=sales_spy_scrapers --cov-report=term-missing --cov-fail-under=85"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: requires a PostgreSQL database",
+]
+
+[tool.coverage.run]
+omit = [
+    "src/sales_spy_scrapers/cli.py",
+    "src/sales_spy_scrapers/factory.py",
+    "src/sales_spy_scrapers/logging.py",
+    "src/sales_spy_scrapers/tasks.py",
+    "src/sales_spy_scrapers/infrastructure/repository.py",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "A", "ASYNC", "C4", "DTZ", "G", "LOG", "PIE", "PT", "RET", "RUF", "SIM", "T20"]
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["bs4.*", "celery.*"]
+ignore_missing_imports = true

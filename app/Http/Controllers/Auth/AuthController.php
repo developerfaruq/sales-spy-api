@@ -4,18 +4,25 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\OAuthProviderEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Services\AuthService;
+use App\Services\EmailVerificationService;
+use App\Services\PasswordResetService;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
     public function __construct(
-        protected AuthService $authService
+        protected AuthService $authService,
+        protected PasswordResetService $passwordResetService,
+        protected EmailVerificationService $verificationService
     ) {}
 
     // Email & Password Auth
@@ -65,6 +72,10 @@ class AuthController extends Controller
         $user = $this->authService->register($request->validated());
         $token = $this->authService->generateToken($user);
 
+        // Best effort: a mail failure must not fail registration, since the
+        // account and token are already valid. The client can resend.
+        $this->verificationService->send($user, $request);
+
         return $this->successResponse(
             data: [
                 'token' => $token,
@@ -75,6 +86,7 @@ class AuthController extends Controller
                     'roles' => $user->getRoleNames()->values(),
                     'plan' => $user->currentPlanSlug(),
                     'credits_balance' => $user->credits_balance,
+                    'email_verified' => $user->hasVerifiedEmail(),
                 ],
             ],
             message: 'Account created successfully',
@@ -230,6 +242,117 @@ class AuthController extends Controller
     //         message: 'User retrieved successfully'
     //     );
     // }
+
+    // POST /api/v1/auth/forgot-password
+
+    /**
+     * Request a password reset link
+     *
+     * Emails a reset link. The expiry is stated in the email itself.
+     *
+     * Always returns 200 with the same body whether or not the address has an
+     * account, so the endpoint cannot be used to discover which emails are
+     * registered. `retry_after` is a fixed value, not a per-account one, and
+     * tells the client how long the broker will suppress a repeat send for the
+     * same address.
+     *
+     * @unauthenticated
+     *
+     * @group Authentication
+     *
+     * @bodyParam email string required The email address on the account. Example: john@example.com
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "message": "If that email is registered, a password reset link is on its way.",
+     *   "data": {
+     *     "retry_after": 60
+     *   }
+     * }
+     * @response 422 {
+     *   "success": false,
+     *   "message": "Validation failed",
+     *   "errors": {
+     *     "email": ["The email field is required."]
+     *   }
+     * }
+     * @response 429 {
+     *   "message": "Too Many Attempts."
+     * }
+     */
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        $this->passwordResetService->sendResetLink($request->email, $request);
+
+        // The broker suppresses a second send for the same address inside this
+        // window and reports success either way, so the client is told up front
+        // rather than being left waiting for an email that will not arrive.
+        return $this->successResponse(
+            data: [
+                'retry_after' => (int) config(
+                    'auth.passwords.'.config('auth.defaults.passwords').'.throttle',
+                    60
+                ),
+            ],
+            message: 'If that email is registered, a password reset link is on its way.'
+        );
+    }
+
+    // POST /api/v1/auth/reset-password
+
+    /**
+     * Reset password with a token
+     *
+     * Consumes the token from the reset email and sets a new password. On success
+     * every existing session is signed out, so the user must log in again.
+     *
+     * @unauthenticated
+     *
+     * @group Authentication
+     *
+     * @bodyParam token string required The token from the reset link. Example: a1b2c3d4e5f6a1b2c3d4e5f6
+     * @bodyParam email string required The email the link was issued for. Example: john@example.com
+     * @bodyParam password string required The new password. Min 8 characters. Example: new-password123
+     * @bodyParam password_confirmation string required Must match password. Example: new-password123
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "message": "Password reset successfully. Please log in with your new password.",
+     *   "data": null
+     * }
+     * @response 400 {
+     *   "success": false,
+     *   "message": "This password reset link is invalid or has expired.",
+     *   "errors": null
+     * }
+     * @response 422 {
+     *   "success": false,
+     *   "message": "Validation failed",
+     *   "errors": {
+     *     "password": ["Password must be at least 8 characters."]
+     *   }
+     * }
+     */
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $status = $this->passwordResetService->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            $request
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            // Both an unknown email and a bad or expired token land here, and
+            // they share one message so neither can be told apart.
+            return $this->errorResponse(
+                message: 'This password reset link is invalid or has expired.',
+                statusCode: 400
+            );
+        }
+
+        return $this->successResponse(
+            message: 'Password reset successfully. Please log in with your new password.'
+        );
+    }
 
     // OAuth
     // GET /api/v1/auth/{provider}/redirect

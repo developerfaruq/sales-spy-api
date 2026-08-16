@@ -26,6 +26,9 @@
 17. [Common Mistakes to Avoid](#17-common-mistakes-to-avoid)
 18. [Security Rules](#18-security-rules)
 19. [External Services Reference](#19-external-services-reference)
+20. [Admin Dashboard](#20-admin-dashboard)
+21. [Phase Progress Tracker](#21-phase-progress-tracker)
+22. [Where to Put This Document in the Project](#22-where-to-put-this-document-in-the-project)
 
 ---
 
@@ -589,6 +592,10 @@ Security: Add rate limiting and security headers middleware
 | `settings` | Admin-configurable key-value settings |
 | `notification_preferences` | Per-user notification toggles |
 | `user_activities` | Activity log (login, exports, etc.) |
+| `credit_transactions` | Immutable audit ledger for every credit movement |
+| `websites` | Canonical website and contact records written by ingestion workers |
+| `ecommerce_stores` | One-to-one commerce profile for an e-commerce website |
+| `store_products` | Products belonging to an e-commerce store |
 | `cache` | Laravel cache table |
 | `jobs` | Queue job storage |
 
@@ -617,6 +624,61 @@ User ──── hasMany ──→ Subscription ──── belongsTo ──�
 **`settings.key`** — Application settings stored as key-value. Access via `Setting::get('key', $default)`. Values are cached in Redis for 1 hour automatically.
 
 **`payment_orders.reference`** — Human-readable order ID in format `SPY-YYYY-NNNNN`. Used in all communications with users.
+
+### Lead Ingestion Contract
+
+The Python scraper repository and Laravel share the `websites`, `ecommerce_stores`, and `store_products` tables. Scrapers write these tables directly; Laravel treats them as the read model for the lead APIs.
+
+**Canonical identity and ownership:**
+
+- `websites.domain` is the primary upsert key. Store a lowercase host only, without scheme, path, port, or a leading `www.`.
+- `websites.source + source_external_id` is an optional secondary source identity. `source_external_id` may be `NULL` when the source does not provide one.
+- Each website has at most one `ecommerce_stores` row through unique `website_id`.
+- A platform identity is unique by `ecommerce_stores.platform + platform_store_id` when the platform provides an ID.
+- Products are upserted per store using `external_id` when available, otherwise `handle`. Production PostgreSQL requires at least one of them.
+- Deleting a website cascades to its store and products. Scrapers should mark sites inactive/unreachable instead of deleting historical leads during normal crawl processing.
+
+**Value conventions:**
+
+- All timestamps are UTC. `created_at` and `discovered_at` are first-seen values and should not be replaced on subsequent upserts.
+- `last_seen_at` means the source or crawler observed the record during the latest successful pass.
+- Money is integer minor units: `1999` means USD 19.99 when `currency_code = USD`.
+- Country and currency codes are uppercase. Country uses ISO 3166-1 alpha-2; currency uses ISO 4217.
+- Evolving extracted structures belong in JSONB (`technologies`, social links, platform metadata, variants, and source payloads). Frequently filtered values belong in typed columns.
+- `source_payload` is for provenance and debugging. Do not put secrets, access tokens, or unbounded page HTML in it.
+
+**Fixed values shared with Laravel enums:**
+
+```text
+crawl_status: pending | crawling | completed | failed | blocked
+website_status: active | inactive | parked | unreachable | unknown
+commerce platform: shopify | woocommerce | wix | bigcommerce | magento |
+                   prestashop | squarespace | custom | unknown
+product status: active | draft | archived | unavailable
+```
+
+**Crawler claiming and retries:**
+
+Workers select due records using `crawl_status IN (pending, failed, completed)` and `next_crawl_at <= NOW()` (or `NULL`). With multiple workers, claim rows in a short transaction using PostgreSQL `FOR UPDATE SKIP LOCKED`, then set `crawl_status = crawling` and increment `crawl_attempts`. Do network work outside that transaction. On completion set `completed`, `last_crawled_at`, `last_seen_at`, and a future `next_crawl_at`; on failure set `failed`, a bounded `last_crawl_error`, and retry time.
+
+Example website upsert:
+
+```sql
+INSERT INTO websites (
+    domain, canonical_url, name, source, source_external_id,
+    crawl_status, discovered_at, last_seen_at, created_at, updated_at
+) VALUES (
+    'example.com', 'https://example.com', 'Example', 'common_crawl', 'record-123',
+    'completed', NOW(), NOW(), NOW(), NOW()
+)
+ON CONFLICT (domain) DO UPDATE SET
+    canonical_url = EXCLUDED.canonical_url,
+    name = EXCLUDED.name,
+    last_seen_at = EXCLUDED.last_seen_at,
+    updated_at = EXCLUDED.updated_at;
+```
+
+Schema changes affecting these tables are API-contract changes for the scraper repository. Coordinate them before deployment and keep scraper writes backward compatible during rolling releases.
 
 ---
 
@@ -726,6 +788,32 @@ GET /auth/{provider}/redirect → redirect to provider
 GET /auth/{provider}/callback → find or create user → 
 create token → return token
 ```
+
+### Email Verification
+
+`User` implements `MustVerifyEmail`. A verification email is sent on registration
+(best effort — a mail failure does not fail the registration, since the account
+and token are already valid).
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/v1/auth/email/verify/{id}/{hash}` | Named `verification.verify`, `signed` middleware. Opened from a mail client, so it **redirects** to `FRONTEND_URL/email-verified?status=...` instead of returning JSON. Status is `verified`, `already-verified`, or `invalid`. |
+| POST | `/api/v1/auth/email/resend` | Authenticated. Returns `sent: false` when already verified rather than erroring. |
+
+Two things guard the link: the **signature** proves it came from us and has not
+expired, and the **hash** of the address proves it was issued for the user's
+*current* email — so a link stops working after an address change.
+
+The link targets an API route rather than the SPA because signature validation
+needs the app key. The API validates, then redirects.
+
+Verification is **not currently enforced** on any endpoint. To require it, add
+Laravel's `verified` middleware to a route group — but note that would lock out
+every existing user registered before this feature, so backfill
+`email_verified_at` first.
+
+`AUTH_VERIFICATION_EXPIRE` (default 60 minutes) controls both the signature
+expiry and the wording in the email, read from one place so they cannot disagree.
 
 ### Token Management
 
@@ -868,49 +956,78 @@ YourJobName::dispatch($param)->delay(now()->addMinutes(5));
 
 Web crawling at scale requires async I/O, massive parallelism, and rich data processing libraries. Python's ecosystem (httpx, BeautifulSoup4, Scrapy, Celery) is purpose-built for this. Laravel would work but with significantly more effort for the same result. The scrapers live in a **separate Python repository** and write directly to the same PostgreSQL database.
 
-### Repository Structure (Separate Repo)
+### Scraper Service Package
 
 ```
 sales-spy-scrapers/
-├── crawlers/
-│   ├── website_crawler.py       ← Detects any website type
-│   ├── shopify_crawler.py       ← Shopify-specific deep crawl
-│   ├── woocommerce_crawler.py   ← WooCommerce detection
-│   └── platform_detector.py    ← Identifies platform from HTTP headers/HTML
-├── sources/
-│   ├── common_crawl.py          ← Queries Common Crawl via Athena
-│   ├── builtwith.py             ← BuiltWith API integration
-│   ├── serp_api.py              ← Google search for site discovery
-│   └── domain_feeds.py          ← Newly registered domain feeds
-├── processors/
-│   ├── contact_extractor.py     ← Extracts email, phone, social links
-│   ├── platform_classifier.py   ← Classifies website type/niche
-│   └── data_normalizer.py       ← Normalizes data before DB insert
-├── tasks/
-│   ├── celery_app.py            ← Celery configuration
-│   ├── discovery_tasks.py       ← Celery tasks for discovery
-│   └── refresh_tasks.py         ← Celery tasks for refreshing data
-├── db/
-│   ├── connection.py            ← PostgreSQL connection
-│   └── repository.py            ← Database write operations
-├── config/
-│   └── settings.py              ← Configuration from environment
-└── requirements.txt
+├── src/sales_spy_scrapers/
+│   ├── application/             ← Crawl orchestration and state transitions
+│   ├── domain/                  ← Immutable records, enums, normalization, errors
+│   ├── infrastructure/          ← Safe HTTP and PostgreSQL adapters
+│   ├── processors/              ← Contacts, platform detection, Shopify catalog
+│   ├── sources/                 ← Common Crawl and future discovery adapters
+│   ├── cli.py                   ← Health, enqueue, discovery, and batch commands
+│   └── tasks.py                 ← Celery worker and beat configuration
+├── tests/unit/                  ← Strict core suite with 85% coverage gate
+├── tests/integration/           ← Isolated PostgreSQL adapter tests
+├── requirements.lock           ← Fully pinned production dependency graph
+├── pyproject.toml              ← Package, Ruff, MyPy, and pytest configuration
+└── Dockerfile                  ← Non-root Celery runtime
 ```
+
+The package is kept in this workspace while the service contract is evolving, but it builds and deploys independently from Laravel. It can be split into its own repository without changing package imports or database contracts.
 
 ### How Websites Are Detected
 
-**Any website platform detection:**
-- Wix — `X-Wix-Meta-Site-Id` header present
-- WordPress — `/wp-json/` endpoint responds, or `wp-content` in HTML
-- Squarespace — `generator` meta tag contains `Squarespace`
-- Webflow — `data-wf-site` attribute in HTML
-- Wix — `static.wixstatic.com` in page source
+Detection is **HTML and header signature matching**, in `processors/platform_detector.py`.
+It is a single ordered pass over the fetched homepage — it does not probe extra
+endpoints. First match wins, so the order matters.
 
-**E-commerce specific:**
-- Shopify — `/products.json` endpoint returns valid JSON
-- WooCommerce — `/wp-json/wc/v3/` endpoint exists
-- Wix Stores — Wix site with `ecom.wix.com` in source
+| Order | Platform | Signal | CMS | Flagged as a store? |
+|---|---|---|---|---|
+| 1 | Wix | `x-wix-meta-site-id` header, or `static.wixstatic.com` in HTML | `wix` | Only if `ecom.wix.com` or `wixstores` also appears |
+| 2 | Shopify | `cdn.shopify.com`, `shopify.theme`, or `myshopify.com` in HTML | — | Always |
+| 3 | WooCommerce | `woocommerce` or `wp-content/plugins/woocommerce` in HTML | `wordpress` | Always |
+| 4 | WordPress | `wp-content`, `/wp-json/`, or `generator` meta | `wordpress` | No |
+| 5 | Squarespace | `squarespace` in HTML or `generator` meta | `squarespace` | Only if `sqs-add-to-cart-button` or `product-item` appears |
+| 6 | Webflow | `data-wf-site` attribute, or `webflow` in HTML | `webflow` | No |
+| 7 | BigCommerce | `bigcommerce` in HTML | — | Always |
+
+Anything else returns no platform, no CMS, and confidence `0.0`. The website row
+is still stored — unrecognised platform is not a reason to discard a lead.
+
+### IMPORTANT — detection coverage is not extraction coverage
+
+These are two different capabilities and they do **not** line up:
+
+- **Detected and flagged as a store:** Shopify, WooCommerce, BigCommerce, and
+  conditionally Wix Stores and Squarespace Commerce.
+- **Products actually extracted:** **Shopify only.** `application/crawler.py`
+  gates catalog crawling on `store.platform == "shopify"`, and
+  `processors/` contains only a Shopify catalog crawler.
+
+So for a WooCommerce, Wix, Squarespace or BigCommerce store the API returns the
+store with its platform, contacts and metadata, but `product_count` stays `0`,
+`GET /ecommerce/{domain}/products` returns an empty page, and a deep scan has
+nothing to fetch. Deep scan is Shopify-only for the same reason.
+
+Two enum values are also currently unreachable: `CommercePlatform::MAGENTO` and
+`PRESTASHOP` exist in both the PHP and Python enums, but no detector branch ever
+returns them.
+
+Adding a platform means adding a catalog crawler alongside `processors/shopify.py`
+and extending the gate in `crawler.py` — the detector alone is not enough.
+
+### Crawler Safety and Concurrency
+
+- Every target and redirect hostname is resolved before the request; private, loopback, link-local, and reserved addresses are rejected.
+- Robots policies are cached per origin and enforced before page/catalog requests.
+- Global and per-host concurrency, per-host request rate, redirects, response bytes, retries, and Shopify pages are bounded by validated environment settings.
+- Workers claim rows with `FOR UPDATE SKIP LOCKED`; each claim receives a UUID fence and expiry, and network work happens after the claim transaction commits.
+- A configurable lease recovers `crawling` rows left by hard-killed workers. All completion/failure writes require the current claim token, preventing stale-worker overwrite.
+- Lead timestamps use UTC `timestamp with time zone` at microsecond precision.
+- Product snapshots mark missing products unavailable only when Shopify pagination confirms the catalog was complete.
+- PostgreSQL writes use atomic upserts and preserve first-seen timestamps/provenance.
 
 ### Database Tables Populated by Scrapers
 
@@ -923,11 +1040,11 @@ Both tables are read by the Laravel API but **only written to by the Python scra
 
 The Python scrapers write directly to PostgreSQL. No API calls from scrapers to Laravel. This is intentional — direct DB writes are faster than HTTP and remove the Laravel API as a bottleneck during bulk ingestion.
 
-However, for triggering re-crawls from the admin panel, the admin can call:
-```
-POST /api/v1/admin/crawl/trigger (Phase 14)
-```
-Which pushes a job onto the Redis `crawl` queue. The Python Celery worker monitors the same Redis and picks up the job.
+Coordination is through the database, not a queue message. The API requests work
+by writing a row — `POST /api/v1/ecommerce/{domain}/scan` inserts a
+`store_scan_requests` row with status `queued`, and the Celery beat tick claims
+it within a minute. There is no admin re-crawl endpoint yet; see Section 20 for
+what the dashboard still needs.
 
 ---
 
@@ -935,11 +1052,46 @@ Which pushes a job onto the Redis `crawl` queue. The Python Celery worker monito
 
 ### Services on Railway
 
-| Service | Type | Purpose |
-|---|---|---|
-| `sales-spy-api` | Web Service | Main Laravel API (Docker) |
-| `sales-spy-worker` | Background Worker | Queue processing (Horizon) |
-| `sales-spy-cron` | Cron Job | Laravel scheduler (every minute) |
+| Service | Type | Build source | Purpose |
+|---|---|---|---|
+| `sales-spy-api` | Web Service | root `Dockerfile` | Main Laravel API |
+| `sales-spy-worker` | Background Worker | root `Dockerfile` | Queue processing (Horizon) |
+| `sales-spy-cron` | Cron Job | root `Dockerfile` | Laravel scheduler (every minute) |
+| `sales-spy-scraper-worker` | Background Worker | `sales-spy-scrapers/Dockerfile` | Celery worker — crawls websites, runs deep scans |
+| `sales-spy-scraper-beat` | Background Worker | `sales-spy-scrapers/Dockerfile` | Celery beat — enqueues the crawl and scan ticks every 60s |
+
+### IMPORTANT — the Python scraper does NOT deploy with the API
+
+The root `Dockerfile` builds a **PHP-only** image. It runs `COPY . .`, so the
+`sales-spy-scrapers/` directory ends up inside the image, but that image has no
+Python interpreter and never starts Celery. Pushing to `main` therefore deploys
+the API and nothing else — **the discovery engine will not run**.
+
+The scraper needs **two additional Railway services**, both built from
+`sales-spy-scrapers/Dockerfile` with the root directory set to
+`sales-spy-scrapers`:
+
+| Service | Start command |
+|---|---|
+| Worker | `worker --loglevel=INFO --queues=crawl --concurrency=1` (the image `CMD`) |
+| Beat | `beat --loglevel=INFO` (override the `CMD`) |
+
+Both share the same `ENTRYPOINT` (`celery -A sales_spy_scrapers.tasks:celery_app`).
+Beat only schedules; without it, no crawl or scan ever starts. Without the
+worker, tasks queue up and nothing is processed.
+
+**Required variables on both scraper services** (see `sales-spy-scrapers/.env.example`):
+
+| Variable | Notes |
+|---|---|
+| `SCRAPER_DATABASE_URL` | Same Neon database as the API. Use the **direct** URL, not the pooler. |
+| `SCRAPER_REDIS_URL` | Celery broker. Upstash works; must be reachable from Railway. |
+| `SCRAPER_SCHEMA_MIGRATION` | Must name the newest migration the worker's queries depend on. The startup guard refuses to run against an older schema. |
+| `SCRAPER_USER_AGENT` | Identify the crawler with a domain **you control**, hosting a page that explains the bot. |
+
+Deploy order matters: run the API first so migrations are applied, then start the
+scraper services. The worker asserts schema compatibility on boot and exits if
+the migration named in `SCRAPER_SCHEMA_MIGRATION` has not run.
 
 ### Deploy Process
 
@@ -1154,7 +1306,130 @@ In production, `ALLOWED_ORIGINS` must list specific frontend domain(s) only. Nev
 
 ---
 
-## 20. Phase Progress Tracker
+## 20. Admin Dashboard
+
+The admin surface is a set of API endpoints consumed by a separate dashboard
+frontend. There are no server-rendered admin pages — this API only serves JSON.
+
+### Access control
+
+Every admin route sits behind four middleware, in this order:
+
+```php
+Route::middleware(['auth:sanctum', 'active', 'admin', 'throttle:60,1'])
+    ->prefix('admin')
+```
+
+- `auth:sanctum` — valid bearer token
+- `active` — rejects users with `is_active = false`
+- `admin` — `EnsureUserIsAdmin`, requires the Spatie `admin` role
+- `throttle:60,1` — 60 requests/minute per user
+
+Roles are registered against the **`api` guard**, not `web`. `User::$guard_name`
+is `'api'` and every seeded role row uses `guard_name => 'api'`. A role created
+with the default `web` guard will silently fail the `admin` check.
+
+Grant admin access with:
+
+```php
+$user->assignRole('admin');
+```
+
+### Current endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/v1/admin/users` | List users — supports search, plan and status filters, pagination |
+| GET | `/api/v1/admin/users/{userId}` | One user with subscription, credits and activity detail |
+| PATCH | `/api/v1/admin/users/{userId}/toggle-status` | Activate or deactivate. Deactivating **revokes all of that user's tokens** |
+| GET | `/api/v1/admin/payments` | List payment orders — filter by status |
+| PUT | `/api/v1/admin/payments/{orderId}/review` | Approve or reject a payment awaiting verification |
+| GET | `/api/v1/admin/metrics` | Dashboard summary — users, subscriptions by plan, revenue in cents, credits, lead counts |
+| GET | `/api/v1/admin/metrics/pipeline` | Crawl and scan queue state, due count, stale claim counts |
+| GET | `/api/v1/admin/activities` | Audit log across all users, filterable by `user_id` and `type` |
+| POST | `/api/v1/admin/leads/enqueue` | Queue up to 500 domains for crawling |
+| POST | `/api/v1/admin/leads/{domain}/recrawl` | Make one known domain due immediately |
+
+Scribe groups these as `Admin — Users`, `Admin - Payments`, `Admin — Dashboard`,
+and `Admin — Leads`.
+
+### Reading the pipeline endpoint
+
+`GET /admin/metrics/pipeline` is the fastest way to tell whether the Python
+workers are alive, which matters because they deploy as separate Railway
+services (Section 15):
+
+| Symptom | Meaning |
+|---|---|
+| `due_now` climbing, `websites_by_crawl_status.completed` flat | Celery beat or the worker is not running |
+| `stale_crawl_claims` persistently non-zero | Lease recovery is not running |
+| `scans_by_status.queued` climbing | Scan processing is stalled |
+| `last_completed_crawl_at` far in the past | Nothing has crawled recently |
+
+### How domains enter the crawl queue
+
+Three ways, all ending in the same place — a `websites` row with
+`crawl_status = 'pending'` and a due `next_crawl_at`:
+
+1. **`POST /admin/leads/enqueue`** — up to 500 domains you already know. Inserts
+   rows only; performs no HTTP work. Known domains are reported as `skipped`, so
+   the call is safe to retry.
+2. **`discover-common-crawl <pattern>`** — the worker CLI. Streams the Common
+   Crawl index for a URL pattern (`*.shop`) and can enqueue up to 100,000 domains
+   in one run. This cannot be an API endpoint: it downloads a multi-megabyte
+   index and would block a web request.
+3. **`enqueue <domains...>`** — the worker CLI equivalent of option 1.
+
+Beat then claims `SCRAPER_CLAIM_BATCH_SIZE` rows per minute (default 10, max 20),
+so throughput is roughly **600–1,200 domains per hour**. Only one batch runs at a
+time, guarded by a Redis lock.
+
+**Important:** you cannot ask Common Crawl for "Shopify stores". It is indexed by
+URL pattern, not platform. Platform is only known after the crawler fetches each
+homepage and matches signatures. To end up with N Shopify stores you enqueue a
+much larger set of candidate domains and let detection sort them — and only
+Shopify yields products (Section 14).
+
+### Manual re-crawl semantics
+
+`POST /admin/leads/{domain}/recrawl` resets `crawl_attempts` to 0 as well as
+setting the row due. That is required, not cosmetic: `crawl_attempts` is the
+consecutive-failure ceiling the worker's claim predicate filters on, so a domain
+parked as `blocked` would otherwise be set due and then skipped immediately.
+
+A row with `crawl_status = 'crawling'` is left untouched and the response returns
+`queued: false`. Resetting an in-flight row would strand the worker's claim token
+and its completion write would be silently discarded by the fencing check.
+
+### Rules specific to the admin surface
+
+- **Deactivation is a security action, not a flag.** `AdminUserController`
+  revokes every Sanctum token when a user is deactivated, so access is cut
+  immediately rather than at token expiry.
+- **Payment approval is what activates a subscription.** Only orders in
+  `awaiting_verification` can be reviewed; approving one calls into
+  `PaymentService` to grant the plan and credits. Never mutate a subscription
+  directly from an admin controller.
+- **The crypto wallet address is a setting, never a constant.** Read it via
+  `Setting::get('crypto_wallet_address')` so an admin can rotate it without a
+  deploy.
+- **Admin actions must be attributable.** Log them through `ActivityService`
+  against the *acting admin*, not the target user.
+
+### Not yet built
+
+The dashboard work still needs, in rough dependency order:
+
+| Capability | Notes |
+|---|---|
+| Plan and settings management | `plans` and `settings` are seeded and read-only over the API today. |
+| Credit adjustment | Granting or clawing back credits must go through `CreditService` with an idempotency key, never a direct `credits_balance` write. `CreditTransactionType::ADMIN_ADJUSTMENT` already exists for it. |
+| Common Crawl discovery trigger | Would need the DB-coordination pattern used by deep scans: a `discovery_jobs` table the API writes and a beat task the worker polls. Today discovery is CLI-only. |
+| Catalog crawlers beyond Shopify | The blocker on product coverage; see Section 14. |
+
+---
+
+## 21. Phase Progress Tracker
 
 > This section tracks every phase of the project. Update the status column as each phase is completed. Any new developer joining the team should read the completed phases to understand what has been built and why decisions were made.
 
@@ -1386,12 +1661,16 @@ GET    /api/v1/user/transactions/{id}/invoice
 
 ---
 
-### Phase 8 — Discovery Engine (Python Scrapers) ⏳
+### Phase 8 — Discovery Engine (Python Scrapers) 🔄
+
+**Completed foundation:**
+- Shared `websites`, `ecommerce_stores`, and `store_products` ingestion schema
+- Canonical identity, upsert, ownership, timestamp, JSONB, money, and crawler-state contract
+- PostgreSQL constraints, GIN/full-text indexes, and due-crawl indexes
+- Laravel models/enums and SQLite/PostgreSQL contract tests
 
 **What will be built:**
 - Separate Python repository: `sales-spy-scrapers`
-- `websites` table in PostgreSQL — any website type
-- `ecommerce_stores` table — specifically e-commerce stores
 - Celery workers for async discovery
 - Platform detection logic for Wix, WordPress, Squarespace, Shopify, WooCommerce
 - Data sources: Common Crawl, BuiltWith API, SerpAPI, domain feeds
@@ -1429,7 +1708,6 @@ GET    /api/v1/websites/{domain}    (costs 1 credit)
 - Product catalog endpoint for Shopify stores
 - Deep scan job — fetches all pages of `/products.json`, calculates real metrics
 - Auto-update feature for watched stores (Pro and Enterprise only)
-- `store_products` table for product catalog data
 
 **Endpoints to be added:**
 ```
@@ -1544,7 +1822,7 @@ POST   /api/v1/admin/crawl/trigger
 
 ---
 
-## 21. Where to Put This Document in the Project
+## 22. Where to Put This Document in the Project
 
 **Create a `docs/` folder in the project root:**
 

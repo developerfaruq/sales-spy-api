@@ -1,21 +1,22 @@
-name: Authentication
+name: Plans
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/v1/auth/register
+      - GET
+    uri: api/v1/plans
     metadata:
       custom: []
-      groupName: Authentication
+      groupName: Plans
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Register a new user'
+      title: 'List all available plans'
       description: |-
-        Creates a new user account and returns an auth token immediately.
-        The user is assigned the free plan with 50 starter credits.
+        Returns all active plans with prices and features.
+        Public endpoint — no authentication required.
+        The frontend uses this to populate the pricing page dynamically.
       authenticated: false
       deprecated: false
     headers:
@@ -25,147 +26,8 @@ endpoints:
     cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters:
-      name:
-        custom: []
-        name: name
-        description: "The user's full name."
-        required: true
-        example: 'John Doe'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email:
-        custom: []
-        name: email
-        description: 'A valid, unique email address.'
-        required: true
-        example: john@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password:
-        custom: []
-        name: password
-        description: 'Min 8 characters.'
-        required: true
-        example: password123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password_confirmation:
-        custom: []
-        name: password_confirmation
-        description: 'Must match password.'
-        required: true
-        example: password123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      name: 'John Doe'
-      email: john@example.com
-      password: password123
-      password_confirmation: password123
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 201
-        content: |-
-          {
-            "success": true,
-            "message": "Account created successfully",
-            "data": {
-              "token": "1|xxxxxxxxxxxxxxxxxxxxxxxx",
-              "user": {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john@example.com",
-                "plan": "free",
-                "credits_balance": 50
-              }
-            }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: |-
-          {
-            "success": false,
-            "message": "Validation failed",
-            "errors": {
-              "email": ["An account with this email already exists."],
-              "password": ["Password must be at least 8 characters."]
-            }
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/v1/auth/login
-    metadata:
-      custom: []
-      groupName: Authentication
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: Login
-      description: |-
-        Authenticate with email and password. Returns a Bearer token
-        to use in all subsequent protected requests.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      email:
-        custom: []
-        name: email
-        description: 'Your account email.'
-        required: true
-        example: john@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password:
-        custom: []
-        name: password
-        description: 'Your password.'
-        required: true
-        example: password123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      email: john@example.com
-      password: password123
+    bodyParameters: []
+    cleanBodyParameters: []
     fileParameters: []
     responses:
       -
@@ -174,28 +36,18 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Logged in successfully",
-            "data": {
-              "token": "2|xxxxxxxxxxxxxxxxxxxxxxxx",
-              "user": {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john@example.com",
-                "plan": "free",
-                "credits_balance": 50
+            "message": "Plans retrieved successfully",
+            "data": [
+              {
+                "slug": "basic",
+                "name": "Basic",
+                "monthly_price_usd": 115.00,
+                "yearly_price_usd": 1104.00,
+                "monthly_quota": 500,
+                "features": ["500 leads per month", "Basic filtering options"],
+                "is_popular": false
               }
-            }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 401
-        content: |-
-          {
-            "success": false,
-            "message": "Invalid email or password",
-            "errors": null
+            ]
           }
         headers: []
         description: ''
@@ -207,18 +59,18 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/v1/auth/logout
+      - GET
+    uri: api/v1/user/subscription
     metadata:
       custom: []
-      groupName: Authentication
+      groupName: Plans
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: Logout
+      title: 'Get current subscription'
       description: |-
-        Invalidates the current Bearer token. The token cannot be
-        used again after this call. The user must login again to get a new token.
+        Returns the authenticated user's active subscription
+        including plan details, billing cycle, and period end date.
       authenticated: true
       deprecated: false
     headers:
@@ -239,17 +91,94 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Logged out successfully",
+            "message": "Subscription retrieved successfully",
+            "data": {
+              "plan": {
+                "slug": "pro",
+                "name": "Pro",
+                "monthly_price_usd": 225.00,
+                "yearly_price_usd": 2160.00,
+                "monthly_quota": 2000,
+                "features": ["2,000 leads per month", "Priority support"],
+                "is_popular": true
+              },
+              "status": "active",
+              "billing_cycle": "monthly",
+              "current_period_end": "2026-04-25T00:00:00.000000Z",
+              "cancelled_at": null
+            }
+          }
+        headers: []
+        description: 'Active subscription'
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "No active subscription found",
+            "data": null
+          }
+        headers: []
+        description: 'No subscription'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/user/subscription/cancel
+    metadata:
+      custom: []
+      groupName: Plans
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Cancel subscription'
+      description: |-
+        Cancels the authenticated user's active subscription.
+        Access continues until the end of the current billing period —
+        the user is not cut off immediately.
+        After the period ends, they are automatically downgraded to the free plan.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Subscription cancelled. Access continues until 2026-04-25.",
             "data": null
           }
         headers: []
         description: ''
       -
         custom: []
-        status: 401
+        status: 400
         content: |-
           {
-            "message": "Unauthenticated."
+            "success": false,
+            "message": "No active subscription to cancel",
+            "errors": null
           }
         headers: []
         description: ''
