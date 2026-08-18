@@ -1,121 +1,149 @@
-name: OAuth
+name: 'Admin — Leads'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
-      - GET
-    uri: 'api/v1/auth/{provider}/redirect'
+      - POST
+    uri: api/v1/admin/leads/enqueue
     metadata:
       custom: []
-      groupName: OAuth
+      groupName: 'Admin — Leads'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'OAuth Redirect'
+      title: 'Queue domains for crawling'
       description: |-
-        Redirects the user to the Google or GitHub login page.
-        Pass `google` or `github` as the provider parameter.
-        After the user authenticates, they are sent to the callback endpoint.
-      authenticated: false
+        Inserts each domain as `pending` with an immediate `next_crawl_at`. The
+        Python worker's beat tick claims them within a minute, then detects the
+        platform, extracts contacts, and — for Shopify — pulls the product
+        catalogue in the same pass.
+
+        This does NOT perform any crawling itself, and it is not bulk discovery.
+        Finding domains from Common Crawl streams a multi-megabyte index and runs
+        in the worker via `discover-common-crawl`, not in a web request.
+
+        Domains already known are reported as `skipped` rather than re-queued, so
+        the call is safe to retry.
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters:
-      provider:
-        custom: []
-        name: provider
-        description: 'The OAuth provider. Accepted: google, github.'
-        required: true
-        example: google
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      provider: google
+    urlParameters: []
+    cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
+    bodyParameters:
+      domains:
+        custom: []
+        name: domains
+        description: 'Must not be greater than 253 characters.'
+        required: true
+        example:
+          - b
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      source:
+        custom: []
+        name: source
+        description: 'Provenance label stored on each row. Must contain only letters, numbers, dashes and underscores. Must not be greater than 64 characters.'
+        required: false
+        example: admin
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      domains:
+        - b
+      source: admin
     fileParameters: []
     responses:
       -
         custom: []
-        status: 302
-        content: '{}'
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Domains queued for crawling",
+            "data": {
+              "queued": 2,
+              "skipped": 1,
+              "invalid": ["not a domain"]
+            }
+          }
         headers: []
-        description: 'Redirects to provider login page'
+        description: ''
       -
         custom: []
-        status: 302
+        status: 403
+        content: '{"success": false, "message": "Admin access required.", "errors": null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
         content: |-
-          <!DOCTYPE html>
-          <html>
-              <head>
-                  <meta charset="UTF-8" />
-                  <meta http-equiv="refresh" content="0;url='https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code'" />
-
-                  <title>Redirecting to https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code</title>
-              </head>
-              <body>
-                  Redirecting to <a href="https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code">https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code</a>.
-              </body>
-          </html>
-        headers:
-          cache-control: 'no-cache, private'
-          location: 'https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&scope=openid+profile+email&response_type=code'
-          content-type: 'text/html; charset=utf-8'
-          x-ratelimit-limit: '20'
-          x-ratelimit-remaining: '19'
-          x-content-type-options: nosniff
-          x-frame-options: DENY
-          x-xss-protection: '1; mode=block'
-          referrer-policy: strict-origin-when-cross-origin
-          access-control-allow-origin: '*'
-        description: null
+          {
+            "success": false,
+            "message": "Validation failed",
+            "errors": {"domains": ["A maximum of 500 domains can be queued per request."]}
+          }
+        headers: []
+        description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
     controller: null
     method: null
     route: null
   -
     custom: []
     httpMethods:
-      - GET
-    uri: 'api/v1/auth/{provider}/callback'
+      - POST
+    uri: 'api/v1/admin/leads/{domain}/recrawl'
     metadata:
       custom: []
-      groupName: OAuth
+      groupName: 'Admin — Leads'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'OAuth Callback'
+      title: 'Request an immediate re-crawl'
       description: |-
-        Handles the response from Google or GitHub after the user authenticates.
-        Returns a Bearer token exactly like the login endpoint does.
-        The frontend should redirect here and extract the token from the response.
-      authenticated: false
+        Marks one known domain due now. Also clears `crawl_attempts`, because that
+        counter is the consecutive-failure ceiling the worker filters on — a domain
+        parked as `blocked` would otherwise be set due and then skipped.
+
+        A domain currently being crawled is left untouched: resetting it would
+        strand the worker's claim token and its completion write would be discarded.
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      provider:
+      domain:
         custom: []
-        name: provider
-        description: 'The OAuth provider. Accepted: google, github.'
+        name: domain
+        description: 'The domain to re-crawl.'
         required: true
-        example: google
+        example: example-store.com
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      provider: google
+      domain: example-store.com
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -128,44 +156,43 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "OAuth login successful",
+            "message": "Re-crawl requested",
+            "data": {"domain": "example-store.com", "queued": true, "reason": null}
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Re-crawl requested",
             "data": {
-              "token": "3|xxxxxxxxxxxxxxxxxxxxxxxx",
-              "user": {
-                "id": 2,
-                "name": "Jane Doe",
-                "email": "jane@gmail.com",
-                "plan": "free",
-                "credits_balance": 50
-              }
+              "domain": "example-store.com",
+              "queued": false,
+              "reason": "A crawl is already in progress for this domain."
             }
           }
         headers: []
-        description: ''
+        description: 'Crawl already running'
       -
         custom: []
-        status: 400
-        content: |-
-          {
-            "success": false,
-            "message": "Unsupported OAuth provider",
-            "errors": null
-          }
+        status: 403
+        content: '{"success": false, "message": "Admin access required.", "errors": null}'
         headers: []
         description: ''
       -
         custom: []
-        status: 500
-        content: |-
-          {
-            "success": false,
-            "message": "OAuth authentication failed",
-            "errors": null
-          }
+        status: 404
+        content: '{"success": false, "message": "Domain not found.", "errors": null}'
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
     controller: null
     method: null
     route: null

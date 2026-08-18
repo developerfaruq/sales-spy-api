@@ -3,9 +3,10 @@
 namespace App\Http\Requests\User;
 
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rules\Password;
 
 class ChangePasswordRequest extends FormRequest
 {
@@ -27,7 +28,7 @@ class ChangePasswordRequest extends FormRequest
         return [
             //
             'current_password' => ['required', 'string'],
-            'new_password'     => ['required', 'string', 'min:8', 'confirmed'],
+            'new_password' => ['required', 'string', Password::defaults(), 'confirmed'],
         ];
     }
 
@@ -35,15 +36,15 @@ class ChangePasswordRequest extends FormRequest
     {
         return [
             'new_password.confirmed' => 'New passwords do not match.',
-            'new_password.min'       => 'New password must be at least 8 characters.',
+            'new_password.min' => 'New password must be at least 8 characters.',
         ];
     }
 
     public function bodyParameters(): array
     {
         return [
-            'current_password'          => ['description' => 'Your current password.', 'example' => 'oldpassword123'],
-            'new_password'              => ['description' => 'Your new password. Min 8 characters.', 'example' => 'newpassword123'],
+            'current_password' => ['description' => 'Your current password.', 'example' => 'oldpassword123'],
+            'new_password' => ['description' => 'Your new password. Min 8 characters.', 'example' => 'newpassword123'],
             'new_password_confirmation' => ['description' => 'Must match new_password.', 'example' => 'newpassword123'],
         ];
     }
@@ -54,7 +55,7 @@ class ChangePasswordRequest extends FormRequest
             response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors'  => $validator->errors(),
+                'errors' => $validator->errors(),
             ], 422)
         );
     }

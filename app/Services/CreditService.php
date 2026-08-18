@@ -86,6 +86,109 @@ class CreditService
         });
     }
 
+    /**
+     * Identify the user's current credit period.
+     *
+     * A credit period begins at the most recent subscription grant or monthly
+     * reset. The subscription row id is NOT a valid period identifier because
+     * resets reuse the same subscription record.
+     */
+    public function currentPeriodId(User $user): ?int
+    {
+        return $user->creditTransactions()
+            ->whereIn('type', [
+                CreditTransactionType::SUBSCRIPTION_GRANT,
+                CreditTransactionType::MONTHLY_RESET,
+            ])
+            ->orderByDesc('id')
+            ->value('id');
+    }
+
+    /**
+     * Charge multiple independently idempotent resources atomically.
+     *
+     * @param  array<int, array{idempotency_key:string, description:string, reference_type?:string|null, reference_id?:string|int|null, metadata?:array}>  $resources
+     * @return array{charged_items:int, credits_spent:int}
+     */
+    public function spendForResources(User $user, int $costPerResource, array $resources): array
+    {
+        $this->ensurePositiveAmount($costPerResource);
+
+        return DB::transaction(function () use ($user, $costPerResource, $resources): array {
+            $lockedUser = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $keys = collect($resources)->pluck('idempotency_key')->unique()->values();
+
+            if ($keys->count() !== count($resources)) {
+                throw new InvalidArgumentException('Resource idempotency keys must be unique.');
+            }
+
+            $existing = CreditTransaction::whereIn('idempotency_key', $keys)
+                ->get()
+                ->keyBy('idempotency_key');
+
+            foreach ($existing as $transaction) {
+                if ($transaction->user_id !== $lockedUser->id) {
+                    throw new InvalidArgumentException('An idempotency key is already used by another user.');
+                }
+            }
+
+            $newResources = collect($resources)
+                ->reject(fn (array $resource): bool => $existing->has($resource['idempotency_key']))
+                ->values();
+            $totalCost = $newResources->count() * $costPerResource;
+
+            if (! $lockedUser->hasUnlimitedCredits() && $lockedUser->credits_balance < $totalCost) {
+                throw new InsufficientCreditsException('Insufficient credits. Please upgrade your plan.');
+            }
+
+            $unlimited = $lockedUser->hasUnlimitedCredits();
+            $balance = $lockedUser->credits_balance;
+            $now = now();
+            $rows = [];
+
+            foreach ($newResources as $resource) {
+                $balanceBefore = $balance;
+                $amount = $unlimited ? 0 : -$costPerResource;
+                $balance += $amount;
+                $metadata = $unlimited
+                    ? [...($resource['metadata'] ?? []), 'requested_amount' => $costPerResource, 'unlimited' => true]
+                    : ($resource['metadata'] ?? []);
+
+                $rows[] = [
+                    'user_id' => $lockedUser->id,
+                    'type' => CreditTransactionType::SPEND->value,
+                    'amount' => $amount,
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $balance,
+                    'description' => $resource['description'],
+                    'reference_type' => $resource['reference_type'] ?? null,
+                    'reference_id' => isset($resource['reference_id'])
+                        ? (string) $resource['reference_id']
+                        : null,
+                    'idempotency_key' => $resource['idempotency_key'],
+                    'metadata' => $metadata ? json_encode($metadata) : null,
+                    'created_at' => $now,
+                ];
+            }
+
+            if ($rows !== []) {
+                CreditTransaction::insert($rows);
+            }
+
+            if (! $unlimited && $totalCost > 0) {
+                $lockedUser->update(['credits_balance' => $balance]);
+            }
+
+            // Deliberately no re-select of the inserted rows: no caller reads
+            // them, and hydrating up to a full page of models would extend the
+            // window this transaction holds lockForUpdate on the user row.
+            return [
+                'charged_items' => $newResources->count(),
+                'credits_spent' => $unlimited ? 0 : $totalCost,
+            ];
+        });
+    }
+
     public function add(
         User $user,
         int $amount,

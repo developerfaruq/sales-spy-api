@@ -30,10 +30,15 @@ else
 fi
 
 # ── Step 4: Generate Scribe API documentation ─────────────────────────
+# Scribe deletes public/vendor/scribe before repopulating it, so a failure here
+# used to leave the docs assets missing with no visible cause. The committed
+# 5.11.0 assets are the fallback; a failure is now reported loudly.
 echo "→ Generating API documentation..."
-php artisan scribe:generate --no-extraction 2>/dev/null || \
-php artisan scribe:generate || \
-echo "⚠ Scribe generation failed — continuing without docs"
+if php artisan scribe:generate --no-extraction 2>/dev/null || php artisan scribe:generate; then
+    echo "✓ API documentation generated"
+else
+    echo "⚠ WARNING: Scribe generation FAILED — /docs may be serving stale or missing assets" >&2
+fi
 
 # ── Step 5: Cache everything for performance ──────────────────────────
 echo "→ Caching configuration..."

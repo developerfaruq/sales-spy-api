@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Plan;
+use Illuminate\Database\Seeder;
 
 class PlanSeeder extends Seeder
 {
@@ -16,42 +15,44 @@ class PlanSeeder extends Seeder
         //
         $plans = [
             [
-                'slug'          => 'free',
-                'name'          => 'Free',
+                'slug' => 'free',
+                'name' => 'Free',
                 'monthly_price' => 0,
-                'yearly_price'  => 0,
+                'yearly_price' => 0,
                 'monthly_quota' => 50,
-                'features'      => [
+                'features' => [
                     '50 leads per month',
                     'Basic website filtering',
                     'Email support',
                 ],
-                'is_active'  => true,
+                'is_active' => true,
                 'sort_order' => 0,
+                'access_rank' => 0,
             ],
             [
-                'slug'          => 'basic',
-                'name'          => 'Basic',
+                'slug' => 'basic',
+                'name' => 'Basic',
                 'monthly_price' => 2000, // $20.00
-                'yearly_price'  => 19200, // $1,104.00 (20% off)
+                'yearly_price' => 19200, // $1,104.00 (20% off)
                 'monthly_quota' => 500,
-                'features'      => [
+                'features' => [
                     '500 leads per month',
                     'Basic filtering options',
                     'Email and phone support',
                     'Weekly database updates',
                     'Website & e-commerce leads',
                 ],
-                'is_active'  => true,
+                'is_active' => true,
                 'sort_order' => 1,
+                'access_rank' => 1,
             ],
             [
-                'slug'          => 'pro',
-                'name'          => 'Pro',
+                'slug' => 'pro',
+                'name' => 'Pro',
                 'monthly_price' => 5000, // $50.00
-                'yearly_price'  => 48000, // $480.00
+                'yearly_price' => 48000, // $480.00
                 'monthly_quota' => 2000,
-                'features'      => [
+                'features' => [
                     '2,000 leads per month',
                     'Advanced filtering options',
                     'Priority support',
@@ -60,16 +61,17 @@ class PlanSeeder extends Seeder
                     'Email sequence automation',
                     'Full contact details',
                 ],
-                'is_active'  => true,
+                'is_active' => true,
                 'sort_order' => 2,
+                'access_rank' => 2,
             ],
             [
-                'slug'          => 'enterprise',
-                'name'          => 'Enterprise',
+                'slug' => 'enterprise',
+                'name' => 'Enterprise',
                 'monthly_price' => 0, // custom pricing
-                'yearly_price'  => 0,
+                'yearly_price' => 0,
                 'monthly_quota' => -1, // unlimited
-                'features'      => [
+                'features' => [
                     'Unlimited leads per month',
                     'Custom filtering & API access',
                     'Dedicated account manager',
@@ -78,8 +80,9 @@ class PlanSeeder extends Seeder
                     'Custom integrations',
                     'SLA guarantee',
                 ],
-                'is_active'  => true,
+                'is_active' => true,
                 'sort_order' => 3,
+                'access_rank' => 3,
             ],
         ];
 

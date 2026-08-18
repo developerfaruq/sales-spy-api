@@ -3,9 +3,10 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends FormRequest
 {
@@ -25,17 +26,18 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required',  'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required',  'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', Password::defaults(), 'confirmed'],
         ];
     }
+
     public function messages(): array
     {
         return [
-            'email.unique'          => 'An account with this email already exists.',
-            'password.confirmed'    => 'Passwords do not match.',
-            'password.min'          => 'Password must be at least 8 characters.',
+            'email.unique' => 'An account with this email already exists.',
+            'password.confirmed' => 'Passwords do not match.',
+            'password.min' => 'Password must be at least 8 characters.',
         ];
     }
 
@@ -44,22 +46,23 @@ class RegisterRequest extends FormRequest
         return [
             'name' => [
                 'description' => 'The user\'s full name.',
-                'example'     => 'John Doe',
+                'example' => 'John Doe',
             ],
             'email' => [
                 'description' => 'A valid, unique email address.',
-                'example'     => 'john@example.com',
+                'example' => 'john@example.com',
             ],
             'password' => [
                 'description' => 'Minimum 8 characters.',
-                'example'     => 'password123',
+                'example' => 'password123',
             ],
             'password_confirmation' => [
                 'description' => 'Must match the password field.',
-                'example'     => 'password123',
+                'example' => 'password123',
             ],
         ];
     }
+
     // This overrides Laravel's default validation error response
     // to use YOUR consistent response format instead of Laravel's default
     protected function failedValidation(Validator $validator)
@@ -68,7 +71,7 @@ class RegisterRequest extends FormRequest
             response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors'  => $validator->errors(),
+                'errors' => $validator->errors(),
             ], 422)
         );
     }

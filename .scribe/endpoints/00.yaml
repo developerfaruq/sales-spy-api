@@ -245,3 +245,381 @@ endpoints:
     controller: null
     method: null
     route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/admin/users/{userId}'
+    metadata:
+      custom: []
+      groupName: 'Admin — Users'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a user'
+      description: |-
+        Soft delete: the row is retained because `payment_orders`,
+        `credit_transactions` and `subscriptions` reference it and are financial
+        records. Access ends immediately — all tokens are revoked and the account is
+        deactivated, and the SoftDeletes global scope stops the user resolving from
+        any future token.
+
+        Refused with 409 when deleting yourself or the last remaining admin, so the
+        organisation cannot lock itself out.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      userId:
+        custom: []
+        name: userId
+        description: 'The user id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      userId: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "User deleted successfully", "data": null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"success": false, "message": "User not found.", "errors": null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 409
+        content: '{"success": false, "message": "You cannot delete your own account.", "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/admin/users/{userId}/restore'
+    metadata:
+      custom: []
+      groupName: 'Admin — Users'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Restore a deleted user'
+      description: |-
+        The account is restored but stays deactivated, so restoring never silently
+        hands access back. Reactivate it separately with the toggle-status endpoint.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      userId:
+        custom: []
+        name: userId
+        description: 'The user id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      userId: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "User restored successfully",
+            "data": {"id": 12, "is_active": false}
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"success": false, "message": "Deleted user not found.", "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/admin/users/{userId}/credits'
+    metadata:
+      custom: []
+      groupName: 'Admin — Users'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Grant credits to a user'
+      description: |-
+        Writes an `admin_adjustment` ledger entry through CreditService, so the
+        balance and the ledger stay reconcilable. A reason is required and is stored
+        on both the transaction and the audit log.
+
+        Grants only — to reduce an allowance, change the user's plan instead.
+        Users on an unlimited plan record the adjustment but keep a zero balance.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      userId:
+        custom: []
+        name: userId
+        description: 'The user id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      userId: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      amount:
+        custom: []
+        name: amount
+        description: 'Credits to grant. Must be at least 1. Must not be greater than 1000000.'
+        required: true
+        example: 100
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      reason:
+        custom: []
+        name: reason
+        description: 'Why the adjustment was made. Stored on the ledger entry and the audit log. Must be at least 3 characters. Must not be greater than 255 characters.'
+        required: true
+        example: 'Goodwill credit for the failed scan on 12 Aug'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      amount: 100
+      reason: 'Goodwill credit for the failed scan on 12 Aug'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Credits granted successfully",
+            "data": {"user_id": 12, "amount": 100, "credits_balance": 150, "transaction_id": 842}
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "success": false,
+            "message": "Validation failed",
+            "errors": {"amount": ["Amount must be a positive number of credits to grant."]}
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/admin/users/{userId}/admin'
+    metadata:
+      custom: []
+      groupName: 'Admin — Users'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Grant the admin role'
+      description: |-
+        This is how admins are provisioned. The first admin has to be created out of
+        band (`php artisan tinker` then `$user->assignRole('admin')`); after that,
+        existing admins promote others through this endpoint.
+
+        Roles are registered against the `api` guard, matching `User::$guard_name`.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      userId:
+        custom: []
+        name: userId
+        description: 'The user id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      userId: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Admin role granted successfully",
+            "data": {"id": 12, "roles": ["user", "admin"]}
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 409
+        content: '{"success": false, "message": "A deactivated user cannot be promoted to admin.", "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/admin/users/{userId}/admin'
+    metadata:
+      custom: []
+      groupName: 'Admin — Users'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Revoke the admin role'
+      description: |-
+        Revoking signs the target out of all sessions. Refused with 409 when
+        demoting yourself or the last remaining admin.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      userId:
+        custom: []
+        name: userId
+        description: 'The user id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      userId: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "message": "Admin role revoked successfully",
+            "data": {"id": 12, "roles": ["user"]}
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 409
+        content: |-
+          {
+            "success": false,
+            "message": "This is the last remaining admin, so it cannot be demoted.",
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null

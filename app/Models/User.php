@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
+use App\Notifications\VerifyEmailNotification;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -25,10 +28,14 @@ use Spatie\Permission\Traits\HasRoles;
     'email_verified_at',
 ])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, Notifiable;
+    /**
+     * SoftDeletes adds a global scope, so a deleted user cannot be resolved from
+     * a Sanctum token and every existing session stops authenticating.
+     */
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected string $guard_name = 'api';
 
@@ -73,6 +80,38 @@ class User extends Authenticatable
     public function creditTransactions()
     {
         return $this->hasMany(CreditTransaction::class)->latest('created_at');
+    }
+
+    public function storeScanRequests()
+    {
+        return $this->hasMany(StoreScanRequest::class);
+    }
+
+    public function inAppNotifications()
+    {
+        return $this->hasMany(InAppNotification::class)->latest('created_at');
+    }
+
+    /**
+     * Send the email verification link.
+     *
+     * Overrides the MustVerifyEmail trait, whose default notification links to a
+     * `verification.verify` web route this API does not serve.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
+    }
+
+    /**
+     * Send the password reset email.
+     *
+     * Overrides the CanResetPassword trait, whose default notification links to
+     * a `password.reset` web route this API does not define.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
     //  Helper Methods
 

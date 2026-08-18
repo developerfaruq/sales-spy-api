@@ -1,76 +1,21 @@
-name: Plans
+name: 'Admin — Settings'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/plans
+    uri: api/v1/admin/settings
     metadata:
       custom: []
-      groupName: Plans
+      groupName: 'Admin — Settings'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List all available plans'
+      title: 'List runtime settings'
       description: |-
-        Returns all active plans with prices and features.
-        Public endpoint — no authentication required.
-        The frontend uses this to populate the pricing page dynamically.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Plans retrieved successfully",
-            "data": [
-              {
-                "slug": "basic",
-                "name": "Basic",
-                "monthly_price_usd": 115.00,
-                "yearly_price_usd": 1104.00,
-                "monthly_quota": 500,
-                "features": ["500 leads per month", "Basic filtering options"],
-                "is_popular": false
-              }
-            ]
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/v1/user/subscription
-    metadata:
-      custom: []
-      groupName: Plans
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get current subscription'
-      description: |-
-        Returns the authenticated user's active subscription
-        including plan details, billing cycle, and period end date.
+        Values the platform reads at runtime — the crypto wallet address, credit
+        costs, payment expiry. Changing these takes effect without a deploy.
       authenticated: true
       deprecated: false
     headers:
@@ -91,36 +36,30 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Subscription retrieved successfully",
-            "data": {
-              "plan": {
-                "slug": "pro",
-                "name": "Pro",
-                "monthly_price_usd": 225.00,
-                "yearly_price_usd": 2160.00,
-                "monthly_quota": 2000,
-                "features": ["2,000 leads per month", "Priority support"],
-                "is_popular": true
+            "message": "Settings retrieved successfully",
+            "data": [
+              {
+                "key": "credit_cost_deep_scan",
+                "value": 10,
+                "type": "integer",
+                "description": "Credits charged for a Shopify deep scan"
               },
-              "status": "active",
-              "billing_cycle": "monthly",
-              "current_period_end": "2026-04-25T00:00:00.000000Z",
-              "cancelled_at": null
-            }
+              {
+                "key": "crypto_wallet_address",
+                "value": "TXyz...",
+                "type": "string",
+                "description": "TRC20 USDT wallet payments are sent to"
+              }
+            ]
           }
         headers: []
-        description: 'Active subscription'
+        description: ''
       -
         custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "No active subscription found",
-            "data": null
-          }
+        status: 403
+        content: '{"success": false, "message": "Unauthorized. Admin access required.", "errors": null}'
         headers: []
-        description: 'No subscription'
+        description: ''
     responseFields: []
     auth:
       - headers
@@ -132,20 +71,22 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/v1/user/subscription/cancel
+      - PUT
+    uri: api/v1/admin/settings
     metadata:
       custom: []
-      groupName: Plans
+      groupName: 'Admin — Settings'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Cancel subscription'
+      title: 'Update runtime settings'
       description: |-
-        Cancels the authenticated user's active subscription.
-        Access continues until the end of the current billing period —
-        the user is not cut off immediately.
-        After the period ends, they are automatically downgraded to the free plan.
+        Accepts a batch of key/value pairs. Only keys that already exist can be
+        written: the application reads specific keys by name, so an unrecognised key
+        would silently do nothing while appearing to succeed.
+
+        Each value is validated against the type stored on its row, and the cached
+        value is invalidated so the change is live immediately.
       authenticated: true
       deprecated: false
     headers:
@@ -156,8 +97,54 @@ endpoints:
     cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
+    bodyParameters:
+      settings:
+        custom: []
+        name: settings
+        description: 'Key/value pairs to update. Each key must already exist. Must have at least 1 items.'
+        required: true
+        example:
+          -
+            key: crypto_wallet_address
+            value: TXyz...
+          -
+            key: credit_cost_deep_scan
+            value: 10
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'settings[].key':
+        custom: []
+        name: 'settings[].key'
+        description: 'Must match an existing stored value.'
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'settings[].value':
+        custom: []
+        name: 'settings[].value'
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      settings:
+        -
+          key: crypto_wallet_address
+          value: TXyz...
+        -
+          key: credit_cost_deep_scan
+          value: 10
     fileParameters: []
     responses:
       -
@@ -166,19 +153,21 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Subscription cancelled. Access continues until 2026-04-25.",
-            "data": null
+            "message": "Settings updated successfully",
+            "data": {"updated": ["crypto_wallet_address", "credit_cost_deep_scan"]}
           }
         headers: []
         description: ''
       -
         custom: []
-        status: 400
+        status: 422
         content: |-
           {
             "success": false,
-            "message": "No active subscription to cancel",
-            "errors": null
+            "message": "Validation failed",
+            "errors": {
+              "settings.0.value": ["The value for credit_cost_deep_scan must be of type integer."]
+            }
           }
         headers: []
         description: ''

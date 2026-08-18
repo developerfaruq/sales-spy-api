@@ -1,0 +1,193 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  laravel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, mbstring, pdo_sqlite
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      # phpunit.xml supplies every variable the suite needs, but phpdotenv still
+      # warns on every boot when .env is absent. Copy the template to keep the
+      # log readable; PHPUnit's env vars are immutable and still take precedence.
+      - run: cp .env.example .env
+      - run: >-
+          vendor/bin/pint --test
+          app/Http/Controllers/Auth
+          app/Http/Requests/Auth
+          app/Http/Controllers/Admin
+          app/Http/Requests/Admin
+          app/Services/AdminLeadService.php
+          app/Services/AdminPlanService.php
+          app/Services/AdminUserService.php
+          app/Services/LeadAccessPolicy.php
+          app/Models/Plan.php
+          database/migrations/2026_08_17_090000_add_user_soft_deletes_and_plan_access_rank.php
+          database/seeders/PlanSeeder.php
+          app/Services/AdminMetricsService.php
+          app/Services/EmailVerificationService.php
+          config/auth.php
+          database/migrations/2026_08_16_090000_add_admin_dashboard_indexes.php
+          tests/Feature/Admin
+          app/Http/Requests/User/ChangePasswordRequest.php
+          bootstrap/app.php
+          config/mail.php
+          app/Notifications
+          app/Providers/AppServiceProvider.php
+          app/Services/PasswordResetService.php
+          config/app.php
+          database/migrations/2026_08_05_163000_create_credit_transactions_and_reset_schedule.php
+          tests/Feature/Auth
+          app/Enums/CommercePlatform.php
+          app/Enums/CrawlStatus.php
+          app/Enums/NotificationType.php
+          app/Enums/ProductStatus.php
+          app/Enums/StoreScanStatus.php
+          app/Enums/WebsiteStatus.php
+          app/Exceptions/StoreScanConflictException.php
+          app/Http/Controllers/Lead
+          app/Http/Controllers/User/NotificationController.php
+          app/Http/Controllers/User/StoreScanController.php
+          app/Http/Requests/Concerns
+          app/Http/Requests/Lead
+          app/Http/Requests/User/NotificationIndexRequest.php
+          app/Models/EcommerceStore.php
+          app/Models/InAppNotification.php
+          app/Models/StoreProduct.php
+          app/Models/StoreScanRequest.php
+          app/Models/User.php
+          app/Models/Website.php
+          app/Services/CreditService.php
+          app/Services/LeadAccessPolicy.php
+          app/Services/LeadCreditService.php
+          app/Services/LeadPresenter.php
+          app/Services/LeadQueryService.php
+          app/Services/NotificationService.php
+          app/Services/StoreScanService.php
+          database/migrations/2026_08_05_174500_create_lead_ingestion_tables.php
+          database/migrations/2026_08_06_120000_harden_lead_ingestion_claims_and_time_contract.php
+          database/migrations/2026_08_06_130000_finalize_lead_ingestion_constraints.php
+          database/migrations/2026_08_06_140000_allow_signed_product_inventory.php
+          database/migrations/2026_08_06_150000_create_store_scan_requests_and_lead_search_indexes.php
+          database/migrations/2026_08_06_160000_harden_store_scan_worker_contract.php
+          database/migrations/2026_08_06_170000_restore_lead_timestamp_defaults.php
+          database/migrations/2026_08_06_180000_bind_scan_refunds_to_credit_period.php
+          database/migrations/2026_08_07_090000_create_in_app_notifications.php
+          database/migrations/2026_08_07_100000_add_scan_attempt_ceiling.php
+          database/migrations/2026_08_07_110000_add_lead_query_indexes.php
+          database/migrations/2026_08_08_090000_add_remaining_lead_sort_and_filter_indexes.php
+          database/migrations/2026_08_08_090100_drop_unused_store_crawl_attempts.php
+          routes/api.php
+          tests/Feature/Ingestion
+          tests/Feature/Lead
+          tests/Feature/Notification
+      - run: php artisan test
+      # A broken down() stays invisible until a rollback is actually needed,
+      # which is the worst time to find out. migrate:reset exercises every
+      # down() in the tree, so no migration count has to be kept in sync here.
+      - name: Migration rollback smoke test
+        env:
+          APP_ENV: testing
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ${{ github.workspace }}/rollback-smoke.sqlite
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          touch "${{ github.workspace }}/rollback-smoke.sqlite"
+          php artisan migrate --force
+          php artisan migrate:reset --force
+          php artisan migrate --force
+
+  scrapers-unit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sales-spy-scrapers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            sales-spy-scrapers/pyproject.toml
+            sales-spy-scrapers/requirements.lock
+      # Install the pinned runtime set the production image ships, then add the
+      # dev tools. Without this CI would resolve fresh from the pyproject
+      # ranges and never exercise the versions that actually deploy.
+      - run: pip install -r requirements.lock
+      - run: pip install -e '.[dev]'
+      - run: pip check
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+      - run: mypy src tests
+      - run: pytest -m 'not integration'
+
+  postgres-contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: sales_spy_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sales_spy_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: sales_spy_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      SCRAPER_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/sales_spy_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, mbstring, pdo_pgsql
+          coverage: none
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            sales-spy-scrapers/pyproject.toml
+            sales-spy-scrapers/requirements.lock
+      - run: composer install --no-interaction --prefer-dist
+      # Job-level env vars are real process env, so they still win over .env.
+      - run: cp .env.example .env
+      - run: php artisan migrate --force
+      - run: >-
+          DB_CONNECTION=pgsql php artisan test
+          tests/Feature/Ingestion/PostgresLeadContractTest.php
+          tests/Feature/Lead/PostgresLeadApiTest.php
+      - run: pip install -r sales-spy-scrapers/requirements.lock
+      - run: pip install -e 'sales-spy-scrapers[dev]'
+      - run: python -m pytest --no-cov -m integration sales-spy-scrapers/tests/integration
+      # The Postgres CHECK-constraint predicates only differ on this driver, so
+      # the reversibility of those migrations has to be proven here too.
+      - run: php artisan migrate:reset --force
+      - run: php artisan migrate --force
