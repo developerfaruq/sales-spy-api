@@ -19,6 +19,12 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <!-- The suite must not depend on a .env file existing. Without these two,
+             CI (which has no .env) gets a null app key, so the password broker's
+             DatabaseTokenRepository throws a TypeError, and CloudinaryService
+             throws ConfigurationException on construction. -->
+        <env name="APP_KEY" value="base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/>
+        <env name="CLOUDINARY_URL" value="cloudinary://000000000000000:testing-secret@test-cloud"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Services\ActivityService;
 use App\Services\AdminLeadService;
 use App\Services\AdminMetricsService;
+use App\Services\AdminPlanService;
+use App\Services\AdminUserService;
 use App\Services\AuthService;
 use App\Services\CloudinaryService;
 use App\Services\CreditService;
@@ -81,6 +83,17 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(AdminLeadService::class, function () {
             return new AdminLeadService;
+        });
+
+        $this->app->singleton(AdminPlanService::class, function () {
+            return new AdminPlanService;
+        });
+
+        $this->app->singleton(AdminUserService::class, function ($app) {
+            return new AdminUserService(
+                $app->make(CreditService::class),
+                $app->make(ActivityService::class)
+            );
         });
     }
 

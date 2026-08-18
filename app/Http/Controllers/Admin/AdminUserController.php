@@ -3,12 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AdjustCreditsRequest;
 use App\Models\User;
+use App\Services\AdminUserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AdminUserController extends Controller
 {
+    public function __construct(
+        protected AdminUserService $userService
+    ) {}
+
     /**
      * List all registered users
      *
@@ -201,5 +207,210 @@ class AdminUserController extends Controller
             'subscription_ends' => $subscription?->current_period_end,
             'registered_at' => $user->created_at,
         ];
+    }
+
+    // DELETE /api/v1/admin/users/{userId}
+
+    /**
+     * Delete a user
+     *
+     * Soft delete: the row is retained because `payment_orders`,
+     * `credit_transactions` and `subscriptions` reference it and are financial
+     * records. Access ends immediately — all tokens are revoked and the account is
+     * deactivated, and the SoftDeletes global scope stops the user resolving from
+     * any future token.
+     *
+     * Refused with 409 when deleting yourself or the last remaining admin, so the
+     * organisation cannot lock itself out.
+     *
+     * @authenticated
+     *
+     * @group Admin — Users
+     *
+     * @urlParam userId integer required The user id. Example: 12
+     *
+     * @response 200 {"success": true, "message": "User deleted successfully", "data": null}
+     * @response 409 {"success": false, "message": "You cannot delete your own account.", "errors": null}
+     * @response 404 {"success": false, "message": "User not found.", "errors": null}
+     */
+    public function destroy(Request $request, int $userId): JsonResponse
+    {
+        $user = User::find($userId);
+
+        if (! $user) {
+            return $this->errorResponse(message: 'User not found.', statusCode: 404);
+        }
+
+        if ($reason = $this->userService->delete($request->user(), $user, $request)) {
+            return $this->errorResponse(message: $reason, statusCode: 409);
+        }
+
+        return $this->successResponse(message: 'User deleted successfully');
+    }
+
+    // POST /api/v1/admin/users/{userId}/restore
+
+    /**
+     * Restore a deleted user
+     *
+     * The account is restored but stays deactivated, so restoring never silently
+     * hands access back. Reactivate it separately with the toggle-status endpoint.
+     *
+     * @authenticated
+     *
+     * @group Admin — Users
+     *
+     * @urlParam userId integer required The user id. Example: 12
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "message": "User restored successfully",
+     *   "data": {"id": 12, "is_active": false}
+     * }
+     * @response 404 {"success": false, "message": "Deleted user not found.", "errors": null}
+     */
+    public function restore(Request $request, int $userId): JsonResponse
+    {
+        $user = User::onlyTrashed()->find($userId);
+
+        if (! $user) {
+            return $this->errorResponse(message: 'Deleted user not found.', statusCode: 404);
+        }
+
+        $this->userService->restore($request->user(), $user, $request);
+
+        return $this->successResponse(
+            data: ['id' => $user->id, 'is_active' => $user->fresh()->is_active],
+            message: 'User restored successfully'
+        );
+    }
+
+    // POST /api/v1/admin/users/{userId}/admin
+
+    /**
+     * Grant the admin role
+     *
+     * This is how admins are provisioned. The first admin has to be created out of
+     * band (`php artisan tinker` then `$user->assignRole('admin')`); after that,
+     * existing admins promote others through this endpoint.
+     *
+     * Roles are registered against the `api` guard, matching `User::$guard_name`.
+     *
+     * @authenticated
+     *
+     * @group Admin — Users
+     *
+     * @urlParam userId integer required The user id. Example: 12
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "message": "Admin role granted successfully",
+     *   "data": {"id": 12, "roles": ["user", "admin"]}
+     * }
+     * @response 409 {"success": false, "message": "A deactivated user cannot be promoted to admin.", "errors": null}
+     */
+    public function grantAdmin(Request $request, int $userId): JsonResponse
+    {
+        return $this->changeAdminRole($request, $userId, true);
+    }
+
+    // DELETE /api/v1/admin/users/{userId}/admin
+
+    /**
+     * Revoke the admin role
+     *
+     * Revoking signs the target out of all sessions. Refused with 409 when
+     * demoting yourself or the last remaining admin.
+     *
+     * @authenticated
+     *
+     * @group Admin — Users
+     *
+     * @urlParam userId integer required The user id. Example: 12
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "message": "Admin role revoked successfully",
+     *   "data": {"id": 12, "roles": ["user"]}
+     * }
+     * @response 409 {
+     *   "success": false,
+     *   "message": "This is the last remaining admin, so it cannot be demoted.",
+     *   "errors": null
+     * }
+     */
+    public function revokeAdmin(Request $request, int $userId): JsonResponse
+    {
+        return $this->changeAdminRole($request, $userId, false);
+    }
+
+    // POST /api/v1/admin/users/{userId}/credits
+
+    /**
+     * Grant credits to a user
+     *
+     * Writes an `admin_adjustment` ledger entry through CreditService, so the
+     * balance and the ledger stay reconcilable. A reason is required and is stored
+     * on both the transaction and the audit log.
+     *
+     * Grants only — to reduce an allowance, change the user's plan instead.
+     * Users on an unlimited plan record the adjustment but keep a zero balance.
+     *
+     * @authenticated
+     *
+     * @group Admin — Users
+     *
+     * @urlParam userId integer required The user id. Example: 12
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "message": "Credits granted successfully",
+     *   "data": {"user_id": 12, "amount": 100, "credits_balance": 150, "transaction_id": 842}
+     * }
+     * @response 422 {
+     *   "success": false,
+     *   "message": "Validation failed",
+     *   "errors": {"amount": ["Amount must be a positive number of credits to grant."]}
+     * }
+     */
+    public function adjustCredits(AdjustCreditsRequest $request, int $userId): JsonResponse
+    {
+        $user = User::find($userId);
+
+        if (! $user) {
+            return $this->errorResponse(message: 'User not found.', statusCode: 404);
+        }
+
+        return $this->successResponse(
+            data: $this->userService->adjustCredits(
+                $request->user(),
+                $user,
+                (int) $request->validated('amount'),
+                $request->validated('reason'),
+                $request
+            ),
+            message: 'Credits granted successfully'
+        );
+    }
+
+    private function changeAdminRole(Request $request, int $userId, bool $grant): JsonResponse
+    {
+        $user = User::find($userId);
+
+        if (! $user) {
+            return $this->errorResponse(message: 'User not found.', statusCode: 404);
+        }
+
+        if ($reason = $this->userService->setAdminRole($request->user(), $user, $grant, $request)) {
+            return $this->errorResponse(message: $reason, statusCode: 409);
+        }
+
+        return $this->successResponse(
+            data: [
+                'id' => $user->id,
+                'roles' => $user->fresh()->getRoleNames()->values(),
+            ],
+            message: 'Admin role '.($grant ? 'granted' : 'revoked').' successfully'
+        );
     }
 }

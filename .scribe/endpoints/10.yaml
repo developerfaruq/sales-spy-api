@@ -1,19 +1,21 @@
-name: Profile
+name: 'Website Leads'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/user/profile
+    uri: api/v1/websites
     metadata:
       custom: []
-      groupName: Profile
+      groupName: 'Website Leads'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Get the authenticated user's profile."
-      description: ''
+      title: 'List website leads'
+      description: |-
+        Search and filter discovered websites. Each newly viewed result costs the
+        configured search-result credit amount once per subscription period.
       authenticated: true
       deprecated: false
     headers:
@@ -22,171 +24,170 @@ endpoints:
       Accept: application/json
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
+    queryParameters:
+      q:
         custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Profile retrieved successfully",
-            "data": {
-              "id": 1,
-              "name": "John Doe",
-              "email": "john@example.com",
-              "plan": "free",
-              "credits_balance": 500,
-              "profile_image": "https://res.cloudinary.com/...",
-              "email_verified": true,
-              "is_active": true,
-              "created_at": "2026-03-01T00:00:00.000000Z"
-            }
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - PATCH
-    uri: api/v1/user/profile
-    metadata:
-      custom: []
-      groupName: Profile
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Update profile'
-      description: 'Update your name and/or email address. Only send the fields you want to change.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      name:
-        custom: []
-        name: name
-        description: 'optional Your display name.'
+        name: q
+        description: 'Full-text search across domain, name, and description. Must not be greater than 255 characters.'
         required: false
-        example: 'John Doe'
+        example: fashion
         type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email:
-        custom: []
-        name: email
-        description: 'optional A valid unique email address.'
-        required: false
-        example: john@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      name: 'John Doe'
-      email: john@example.com
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Profile updated successfully",
-            "data": {
-              "id": 1,
-              "name": "John Doe",
-              "email": "john@example.com",
-              "plan": "free",
-              "credits_balance": 500,
-              "profile_image": null,
-              "email_verified": true,
-              "is_active": true,
-              "created_at": "2026-03-01T00:00:00.000000Z"
-            }
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/v1/user/profile/avatar
-    metadata:
-      custom: []
-      groupName: Profile
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Upload a new avatar image.'
-      description: ''
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
-      Content-Type: multipart/form-data
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      avatar:
-        custom: []
-        name: avatar
-        description: 'The image file. Max 2MB. Accepted: jpg, jpeg, png, webp.'
-        required: true
-        example: null
-        type: file
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
+      country:
+        custom: []
+        name: country
+        description: 'ISO 3166-1 alpha-2 country code. Must contain only letters. Must be 2 characters.'
+        required: false
+        example: US
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      platform:
+        custom: []
+        name: platform
+        description: 'Detected website or commerce platform. Must not be greater than 64 characters.'
+        required: false
+        example: shopify
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      cms:
+        custom: []
+        name: cms
+        description: 'Detected content management system. Must not be greater than 64 characters.'
+        required: false
+        example: wordpress
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      niche:
+        custom: []
+        name: niche
+        description: 'Exact niche classification. Must not be greater than 255 characters.'
+        required: false
+        example: Fashion
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      technology:
+        custom: []
+        name: technology
+        description: 'Technology that must exist in the technology JSON array. Must not be greater than 100 characters.'
+        required: false
+        example: Cloudflare
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      is_ecommerce:
+        custom: []
+        name: is_ecommerce
+        description: 'Filter e-commerce or non-commerce websites.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Website status.'
+        required: false
+        example: active
+        type: string
+        enumValues:
+          - active
+          - inactive
+          - parked
+          - unreachable
+          - unknown
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Sort field.'
+        required: false
+        example: last_seen_at
+        type: string
+        enumValues:
+          - domain
+          - last_seen_at
+          - discovered_at
+          - estimated_monthly_traffic
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      direction:
+        custom: []
+        name: direction
+        description: 'Sort direction.'
+        required: false
+        example: desc
+        type: string
+        enumValues:
+          - asc
+          - desc
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Results per page. Maximum 100. Must be at least 1. Must not be greater than 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: fashion
+      country: US
+      platform: shopify
+      cms: wordpress
+      niche: Fashion
+      technology: Cloudflare
+      is_ecommerce: true
+      status: active
+      sort: last_seen_at
+      direction: desc
+      per_page: 25
+    bodyParameters: []
     cleanBodyParameters: []
-    fileParameters:
-      avatar: null
+    fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Avatar updated successfully",
-            "data": { "profile_image": "https://res.cloudinary.com/..." }
-          }
-        headers: []
-        description: ''
+        content: '{"success":true,"message":"Website leads retrieved successfully","data":[],"meta":{"current_page":1,"last_page":1,"per_page":25,"total":0,"charged_items":0,"credits_spent":0,"credits_balance":500}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          x-ratelimit-limit: '120'
+          x-ratelimit-remaining: '119'
+          x-content-type-options: nosniff
+          x-frame-options: DENY
+          x-xss-protection: '1; mode=block'
+          referrer-policy: strict-origin-when-cross-origin
+          access-control-allow-origin: '*'
+        description: null
     responseFields: []
     auth:
       - headers
@@ -198,24 +199,38 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - DELETE
-    uri: api/v1/user/profile/avatar
+      - GET
+    uri: 'api/v1/websites/{domain}'
     metadata:
       custom: []
-      groupName: Profile
+      groupName: 'Website Leads'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Delete the user's avatar."
-      description: ''
+      title: 'Get website lead details'
+      description: |-
+        Unlocks detailed website intelligence. Contact fields remain masked on
+        the Free plan. The resource is charged once per subscription period.
       authenticated: true
       deprecated: false
     headers:
       Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
+    urlParameters:
+      domain:
+        custom: []
+        name: domain
+        description: 'Canonical website domain.'
+        required: true
+        example: example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      domain: example.com
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -224,108 +239,19 @@ endpoints:
     responses:
       -
         custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Avatar removed successfully",
-            "data": null
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - PUT
-    uri: api/v1/user/password
-    metadata:
-      custom: []
-      groupName: Profile
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: "Change the authenticated user's password."
-      description: ''
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      current_password:
-        custom: []
-        name: current_password
-        description: 'Your current password.'
-        required: true
-        example: oldpassword123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      new_password:
-        custom: []
-        name: new_password
-        description: 'Min 8 characters.'
-        required: true
-        example: newpassword123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      new_password_confirmation:
-        custom: []
-        name: new_password_confirmation
-        description: 'Must match new_password.'
-        required: true
-        example: newpassword123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      current_password: oldpassword123
-      new_password: newpassword123
-      new_password_confirmation: newpassword123
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Password changed successfully",
-            "data": null
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: |-
-          {
-            "success": false,
-            "message": "Current password is incorrect",
-            "errors": null
-          }
-        headers: []
-        description: ''
+        status: 404
+        content: '{"success":false,"message":"Website lead not found.","errors":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          x-ratelimit-limit: '120'
+          x-ratelimit-remaining: '119'
+          x-content-type-options: nosniff
+          x-frame-options: DENY
+          x-xss-protection: '1; mode=block'
+          referrer-policy: strict-origin-when-cross-origin
+          access-control-allow-origin: '*'
+        description: null
     responseFields: []
     auth:
       - headers

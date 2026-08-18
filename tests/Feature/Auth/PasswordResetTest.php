@@ -109,6 +109,25 @@ class PasswordResetTest extends TestCase
     }
 
     /**
+     * The mailer guard must stay scoped to mailer exceptions.
+     *
+     * A catch-all Throwable here previously swallowed a TypeError from a null
+     * app key and reported success, so a broken deployment looked healthy. A
+     * non-mail fault must still surface rather than being reported as "sent".
+     */
+    public function test_non_mail_failures_are_not_swallowed_as_success(): void
+    {
+        $this->createUser('surface@example.com');
+
+        Mail::shouldReceive('mailer')->andThrow(new \RuntimeException('database is on fire'));
+        Mail::shouldReceive('send')->andThrow(new \RuntimeException('database is on fire'));
+
+        $this->expectException(\RuntimeException::class);
+        $this->withoutExceptionHandling()
+            ->postJson('/api/v1/auth/forgot-password', ['email' => 'surface@example.com']);
+    }
+
+    /**
      * The broker suppresses repeat sends per address, and the client is told so
      * rather than being left waiting for an email that will never arrive.
      */

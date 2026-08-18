@@ -1344,14 +1344,128 @@ $user->assignRole('admin');
 | PATCH | `/api/v1/admin/users/{userId}/toggle-status` | Activate or deactivate. Deactivating **revokes all of that user's tokens** |
 | GET | `/api/v1/admin/payments` | List payment orders — filter by status |
 | PUT | `/api/v1/admin/payments/{orderId}/review` | Approve or reject a payment awaiting verification |
+| DELETE | `/api/v1/admin/users/{userId}` | Soft delete. Revokes all tokens and deactivates |
+| POST | `/api/v1/admin/users/{userId}/restore` | Restore a deleted user, still deactivated |
+| POST | `/api/v1/admin/users/{userId}/credits` | Grant credits with a required reason |
+| POST | `/api/v1/admin/users/{userId}/admin` | Grant the admin role |
+| DELETE | `/api/v1/admin/users/{userId}/admin` | Revoke the admin role and sign them out |
+| GET | `/api/v1/admin/plans` | All plans including inactive, with subscriber counts |
+| POST | `/api/v1/admin/plans` | Create a plan |
+| PUT | `/api/v1/admin/plans/{planId}` | Update a plan; send only changed fields |
+| DELETE | `/api/v1/admin/plans/{planId}` | Delete a plan, if unused |
+| GET | `/api/v1/admin/settings` | Runtime settings with cast values |
+| PUT | `/api/v1/admin/settings` | Batch-update settings; live immediately |
 | GET | `/api/v1/admin/metrics` | Dashboard summary — users, subscriptions by plan, revenue in cents, credits, lead counts |
 | GET | `/api/v1/admin/metrics/pipeline` | Crawl and scan queue state, due count, stale claim counts |
 | GET | `/api/v1/admin/activities` | Audit log across all users, filterable by `user_id` and `type` |
 | POST | `/api/v1/admin/leads/enqueue` | Queue up to 500 domains for crawling |
 | POST | `/api/v1/admin/leads/{domain}/recrawl` | Make one known domain due immediately |
 
-Scribe groups these as `Admin — Users`, `Admin - Payments`, `Admin — Dashboard`,
-and `Admin — Leads`.
+Scribe groups these as `Admin — Users`, `Admin - Payments`, `Admin — Plans`,
+`Admin — Settings`, `Admin — Dashboard`, and `Admin — Leads`.
+
+### Admin provisioning
+
+There is no separate admin login. Admins authenticate through the normal
+`POST /auth/login`, and the response's `roles` array tells the client to show the
+admin UI. A second login endpoint would add attack surface without adding
+security, because authorization is enforced per request by the `admin` middleware.
+
+The **first** admin must be created out of band, because promotion requires an
+existing admin:
+
+```php
+php artisan tinker
+>>> App\Models\User::where('email', 'you@example.com')->first()->assignRole('admin');
+```
+
+After that, admins promote each other with
+`POST /admin/users/{userId}/admin`. Two guards stop an organisation locking itself
+out of its own panel:
+
+- You cannot delete or demote **your own** account.
+- You cannot delete or demote the **last remaining** admin.
+
+Revoking the role also deletes the target's tokens, so a demoted admin cannot
+keep operating on an open session.
+
+### Deleting versus suspending a user
+
+These are different actions and both exist:
+
+| Action | Endpoint | Effect |
+|---|---|---|
+| Suspend / reinstate | `PATCH /admin/users/{id}/toggle-status` | Flips `is_active`. Suspending revokes all tokens. Reversible at any time. |
+| Delete | `DELETE /admin/users/{id}` | Soft delete, plus deactivate, plus token revocation. |
+| Restore | `POST /admin/users/{id}/restore` | Undoes the delete, leaving the account deactivated. |
+
+Deletion is **soft** by design. `payment_orders`, `credit_transactions` and
+`subscriptions` all reference `users.id`, so a hard delete would either cascade
+away revenue records or fail on a foreign key. The row stays, `deleted_at` is
+set, and the SoftDeletes global scope means the user can no longer be resolved
+from a token or a login attempt.
+
+Two consequences worth knowing:
+
+- The email stays **reserved**. Re-registering a deleted address returns 422,
+  because the `unique:users` rule queries the table without the soft-delete
+  scope. Restore the account instead.
+- Restoring does **not** restore access. The account comes back deactivated, so
+  reinstating is always a deliberate second step.
+
+### Plan management
+
+`access_rank` is the field that matters most and the one most likely to be set
+wrong. It decides what lead data a tier unlocks:
+
+| Rank | Unlocks |
+|---|---|
+| 0 | Website and store listings only |
+| 1 | Contact details and product catalogues |
+| 2 | Deep scans |
+
+Ranks live on `plans.access_rank`. They used to be a hardcoded slug map inside
+`LeadAccessPolicy`, which meant **any plan created with a new slug silently
+behaved as free tier**. If you add a paid tier and omit `access_rank` it defaults
+to 0 for an unrecognised slug, so set it explicitly.
+
+Deletion is refused with 409 in three cases, because each would break something:
+
+| Refused when | Why |
+|---|---|
+| It is the free plan | `SubscriptionService::assignFreePlan` resolves it by slug on every registration |
+| Any subscription references it | Foreign key, and existing subscribers would lose their tier |
+| Any payment order references it | Billing history would be orphaned |
+
+Deactivate instead (`is_active: false`). That hides the plan from the public
+`GET /plans` catalogue while leaving current subscribers untouched.
+
+The free plan's **slug** is immutable for the same reason its row is; its other
+fields are editable. Changing `monthly_quota` does not retroactively change what
+current subscribers hold — their balance was granted at subscription time and is
+recalculated on their next monthly reset.
+
+### Runtime settings
+
+`PUT /admin/settings` takes a batch of key/value pairs and invalidates the cached
+value, so changes are live without a deploy. This is how the crypto wallet
+address is rotated.
+
+Only keys that **already exist** can be written. The application reads specific
+keys by name, so an unrecognised key would be inert while appearing to succeed.
+Each value is validated against the `type` recorded on its row, so a credit cost
+cannot be set to a string.
+
+### Credit adjustments
+
+`POST /admin/users/{id}/credits` writes an `admin_adjustment` entry through
+`CreditService`, keeping the balance and the ledger reconcilable. A direct
+`credits_balance` write would break that invariant.
+
+**Grants only.** `CreditService::add` rejects non-positive amounts, and a debit
+path would have to define what happens when the balance is already below the
+deduction. To reduce an allowance, change the user's plan. A `reason` is required
+and is stored on both the ledger entry and the audit log.
 
 ### Reading the pipeline endpoint
 
@@ -1422,10 +1536,10 @@ The dashboard work still needs, in rough dependency order:
 
 | Capability | Notes |
 |---|---|
-| Plan and settings management | `plans` and `settings` are seeded and read-only over the API today. |
-| Credit adjustment | Granting or clawing back credits must go through `CreditService` with an idempotency key, never a direct `credits_balance` write. `CreditTransactionType::ADMIN_ADJUSTMENT` already exists for it. |
+| Credit debits | Only grants are supported. A debit needs a defined rule for balances already below the deduction. |
 | Common Crawl discovery trigger | Would need the DB-coordination pattern used by deep scans: a `discovery_jobs` table the API writes and a beat task the worker polls. Today discovery is CLI-only. |
 | Catalog crawlers beyond Shopify | The blocker on product coverage; see Section 14. |
+| Admin invite flow | Promotion requires an existing account. Inviting a brand-new admin by email would need a signed invite token. |
 
 ---
 

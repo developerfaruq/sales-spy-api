@@ -15,6 +15,10 @@ jobs:
           extensions: intl, mbstring, pdo_sqlite
           coverage: none
       - run: composer install --no-interaction --prefer-dist
+      # phpunit.xml supplies every variable the suite needs, but phpdotenv still
+      # warns on every boot when .env is absent. Copy the template to keep the
+      # log readable; PHPUnit's env vars are immutable and still take precedence.
+      - run: cp .env.example .env
       - run: >-
           vendor/bin/pint --test
           app/Http/Controllers/Auth
@@ -22,6 +26,12 @@ jobs:
           app/Http/Controllers/Admin
           app/Http/Requests/Admin
           app/Services/AdminLeadService.php
+          app/Services/AdminPlanService.php
+          app/Services/AdminUserService.php
+          app/Services/LeadAccessPolicy.php
+          app/Models/Plan.php
+          database/migrations/2026_08_17_090000_add_user_soft_deletes_and_plan_access_rank.php
+          database/seeders/PlanSeeder.php
           app/Services/AdminMetricsService.php
           app/Services/EmailVerificationService.php
           config/auth.php
@@ -167,6 +177,8 @@ jobs:
             sales-spy-scrapers/pyproject.toml
             sales-spy-scrapers/requirements.lock
       - run: composer install --no-interaction --prefer-dist
+      # Job-level env vars are real process env, so they still win over .env.
+      - run: cp .env.example .env
       - run: php artisan migrate --force
       - run: >-
           DB_CONNECTION=pgsql php artisan test

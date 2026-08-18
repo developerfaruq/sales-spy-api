@@ -1,121 +1,28 @@
-name: OAuth
+name: General
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/auth/{provider}/redirect'
+    uri: api/v1/health
     metadata:
       custom: []
-      groupName: OAuth
+      groupName: General
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'OAuth Redirect'
+      title: 'Health Check'
       description: |-
-        Redirects the user to the Google or GitHub login page.
-        Pass `google` or `github` as the provider parameter.
-        After the user authenticates, they are sent to the callback endpoint.
+        Check if the API is online. No authentication required.
+        Use this to verify the server is reachable before making other calls.
       authenticated: false
       deprecated: false
     headers:
       Content-Type: application/json
       Accept: application/json
-    urlParameters:
-      provider:
-        custom: []
-        name: provider
-        description: 'The OAuth provider. Accepted: google, github.'
-        required: true
-        example: google
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      provider: google
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 302
-        content: '{}'
-        headers: []
-        description: 'Redirects to provider login page'
-      -
-        custom: []
-        status: 302
-        content: |-
-          <!DOCTYPE html>
-          <html>
-              <head>
-                  <meta charset="UTF-8" />
-                  <meta http-equiv="refresh" content="0;url='https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code'" />
-
-                  <title>Redirecting to https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code</title>
-              </head>
-              <body>
-                  Redirecting to <a href="https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code">https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code</a>.
-              </body>
-          </html>
-        headers:
-          cache-control: 'no-cache, private'
-          location: 'https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&scope=openid+profile+email&response_type=code'
-          content-type: 'text/html; charset=utf-8'
-          x-ratelimit-limit: '20'
-          x-ratelimit-remaining: '19'
-          x-content-type-options: nosniff
-          x-frame-options: DENY
-          x-xss-protection: '1; mode=block'
-          referrer-policy: strict-origin-when-cross-origin
-          access-control-allow-origin: '*'
-        description: null
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: 'api/v1/auth/{provider}/callback'
-    metadata:
-      custom: []
-      groupName: OAuth
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'OAuth Callback'
-      description: |-
-        Handles the response from Google or GitHub after the user authenticates.
-        Returns a Bearer token exactly like the login endpoint does.
-        The frontend should redirect here and extract the token from the response.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      provider:
-        custom: []
-        name: provider
-        description: 'The OAuth provider. Accepted: google, github.'
-        required: true
-        example: google
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      provider: google
+    urlParameters: []
+    cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -128,39 +35,11 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "OAuth login successful",
+            "message": "Sales-Spy API v1 is live",
             "data": {
-              "token": "3|xxxxxxxxxxxxxxxxxxxxxxxx",
-              "user": {
-                "id": 2,
-                "name": "Jane Doe",
-                "email": "jane@gmail.com",
-                "plan": "free",
-                "credits_balance": 50
-              }
+              "version": "1.0.0",
+              "environment": "production"
             }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 400
-        content: |-
-          {
-            "success": false,
-            "message": "Unsupported OAuth provider",
-            "errors": null
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 500
-        content: |-
-          {
-            "success": false,
-            "message": "OAuth authentication failed",
-            "errors": null
           }
         headers: []
         description: ''

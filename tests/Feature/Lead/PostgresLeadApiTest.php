@@ -48,7 +48,10 @@ class PostgresLeadApiTest extends TestCase
                 ->assertJsonPath('data.0.domain', $domain)
                 ->assertJsonPath('meta.total', 1);
         } finally {
-            User::where('email', $email)->delete();
+            // forceDelete: User uses SoftDeletes, so a plain delete() would leave
+            // the row (and its credit_transactions) behind in the real database
+            // this test runs against.
+            User::withTrashed()->where('email', $email)->forceDelete();
             Website::where('domain', $domain)->delete();
         }
     }

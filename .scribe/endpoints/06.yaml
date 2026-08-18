@@ -1,56 +1,29 @@
-name: Authentication
+name: Plans
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/auth/email/verify/{id}/{hash}'
+    uri: api/v1/plans
     metadata:
       custom: []
-      groupName: Authentication
+      groupName: Plans
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Verify an email address'
+      title: 'List all available plans'
       description: |-
-        Target of the link in the verification email. The route is signed, so the
-        `signed` middleware rejects tampered or expired links before this runs.
-
-        This endpoint is opened by a mail client, not by the SPA, so it redirects
-        to `FRONTEND_URL/email-verified?status=...` rather than returning JSON.
-        Status values are `verified`, `already-verified`, and `invalid`.
+        Returns all active plans with prices and features.
+        Public endpoint — no authentication required.
+        The frontend uses this to populate the pricing page dynamically.
       authenticated: false
       deprecated: false
     headers:
       Content-Type: application/json
       Accept: application/json
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The user id from the emailed link.'
-        required: true
-        example: 1
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      hash:
-        custom: []
-        name: hash
-        description: 'The address hash from the emailed link.'
-        required: true
-        example: 3a5f1c...
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: 1
-      hash: 3a5f1c...
+    urlParameters: []
+    cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -59,28 +32,25 @@ endpoints:
     responses:
       -
         custom: []
-        status: 302
-        content: '{}'
-        headers: []
-        description: 'Redirects to the SPA'
-      -
-        custom: []
-        status: 403
+        status: 200
         content: |-
           {
-              "message": "Invalid signature."
+            "success": true,
+            "message": "Plans retrieved successfully",
+            "data": [
+              {
+                "slug": "basic",
+                "name": "Basic",
+                "monthly_price_usd": 115.00,
+                "yearly_price_usd": 1104.00,
+                "monthly_quota": 500,
+                "features": ["500 leads per month", "Basic filtering options"],
+                "is_popular": false
+              }
+            ]
           }
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          x-ratelimit-limit: '10'
-          x-ratelimit-remaining: '9'
-          x-content-type-options: nosniff
-          x-frame-options: DENY
-          x-xss-protection: '1; mode=block'
-          referrer-policy: strict-origin-when-cross-origin
-          access-control-allow-origin: '*'
-        description: null
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
@@ -89,19 +59,18 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/v1/auth/email/resend
+      - GET
+    uri: api/v1/user/subscription
     metadata:
       custom: []
-      groupName: Authentication
+      groupName: Plans
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Resend the verification email'
+      title: 'Get current subscription'
       description: |-
-        Sends a fresh verification link to the authenticated user's address.
-        Returns 200 with `sent: false` when the address is already verified, so a
-        client can render the right state without treating it as an error.
+        Returns the authenticated user's active subscription
+        including plan details, billing cycle, and period end date.
       authenticated: true
       deprecated: false
     headers:
@@ -122,37 +91,36 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Verification email sent.",
+            "message": "Subscription retrieved successfully",
             "data": {
-              "sent": true,
-              "verified": false
+              "plan": {
+                "slug": "pro",
+                "name": "Pro",
+                "monthly_price_usd": 225.00,
+                "yearly_price_usd": 2160.00,
+                "monthly_quota": 2000,
+                "features": ["2,000 leads per month", "Priority support"],
+                "is_popular": true
+              },
+              "status": "active",
+              "billing_cycle": "monthly",
+              "current_period_end": "2026-04-25T00:00:00.000000Z",
+              "cancelled_at": null
             }
           }
         headers: []
-        description: ''
+        description: 'Active subscription'
       -
         custom: []
         status: 200
         content: |-
           {
             "success": true,
-            "message": "This email address is already verified.",
-            "data": {
-              "sent": false,
-              "verified": true
-            }
+            "message": "No active subscription found",
+            "data": null
           }
         headers: []
-        description: 'Already verified'
-      -
-        custom: []
-        status: 429
-        content: |-
-          {
-            "message": "Too Many Attempts."
-          }
-        headers: []
-        description: ''
+        description: 'No subscription'
     responseFields: []
     auth:
       - headers
@@ -165,421 +133,19 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/auth/forgot-password
+    uri: api/v1/user/subscription/cancel
     metadata:
       custom: []
-      groupName: Authentication
+      groupName: Plans
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Request a password reset link'
+      title: 'Cancel subscription'
       description: |-
-        Emails a reset link. The expiry is stated in the email itself.
-
-        Always returns 200 with the same body whether or not the address has an
-        account, so the endpoint cannot be used to discover which emails are
-        registered. `retry_after` is a fixed value, not a per-account one, and
-        tells the client how long the broker will suppress a repeat send for the
-        same address.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      email:
-        custom: []
-        name: email
-        description: 'The email address on the account.'
-        required: true
-        example: john@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      email: john@example.com
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "If that email is registered, a password reset link is on its way.",
-            "data": {
-              "retry_after": 60
-            }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: |-
-          {
-            "success": false,
-            "message": "Validation failed",
-            "errors": {
-              "email": ["The email field is required."]
-            }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 429
-        content: |-
-          {
-            "message": "Too Many Attempts."
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/v1/auth/reset-password
-    metadata:
-      custom: []
-      groupName: Authentication
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Reset password with a token'
-      description: |-
-        Consumes the token from the reset email and sets a new password. On success
-        every existing session is signed out, so the user must log in again.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      token:
-        custom: []
-        name: token
-        description: 'The token from the reset link.'
-        required: true
-        example: a1b2c3d4e5f6a1b2c3d4e5f6
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email:
-        custom: []
-        name: email
-        description: 'The email the link was issued for.'
-        required: true
-        example: john@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password:
-        custom: []
-        name: password
-        description: 'The new password. Min 8 characters.'
-        required: true
-        example: new-password123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password_confirmation:
-        custom: []
-        name: password_confirmation
-        description: 'Must match password.'
-        required: true
-        example: new-password123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      token: a1b2c3d4e5f6a1b2c3d4e5f6
-      email: john@example.com
-      password: new-password123
-      password_confirmation: new-password123
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Password reset successfully. Please log in with your new password.",
-            "data": null
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 400
-        content: |-
-          {
-            "success": false,
-            "message": "This password reset link is invalid or has expired.",
-            "errors": null
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: |-
-          {
-            "success": false,
-            "message": "Validation failed",
-            "errors": {
-              "password": ["Password must be at least 8 characters."]
-            }
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/v1/auth/register
-    metadata:
-      custom: []
-      groupName: Authentication
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Register a new user'
-      description: |-
-        Creates a new user account and returns an auth token immediately.
-        The user is assigned the free plan with 50 starter credits.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      name:
-        custom: []
-        name: name
-        description: "The user's full name."
-        required: true
-        example: 'John Doe'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email:
-        custom: []
-        name: email
-        description: 'A valid, unique email address.'
-        required: true
-        example: john@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password:
-        custom: []
-        name: password
-        description: 'Min 8 characters.'
-        required: true
-        example: password123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password_confirmation:
-        custom: []
-        name: password_confirmation
-        description: 'Must match password.'
-        required: true
-        example: password123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      name: 'John Doe'
-      email: john@example.com
-      password: password123
-      password_confirmation: password123
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 201
-        content: |-
-          {
-            "success": true,
-            "message": "Account created successfully",
-            "data": {
-              "token": "1|xxxxxxxxxxxxxxxxxxxxxxxx",
-              "user": {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john@example.com",
-                "plan": "free",
-                "credits_balance": 50
-              }
-            }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: |-
-          {
-            "success": false,
-            "message": "Validation failed",
-            "errors": {
-              "email": ["An account with this email already exists."],
-              "password": ["Password must be at least 8 characters."]
-            }
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/v1/auth/login
-    metadata:
-      custom: []
-      groupName: Authentication
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: Login
-      description: |-
-        Authenticate with email and password. Returns a Bearer token
-        to use in all subsequent protected requests.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      email:
-        custom: []
-        name: email
-        description: 'Your account email.'
-        required: true
-        example: john@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password:
-        custom: []
-        name: password
-        description: 'Your password.'
-        required: true
-        example: password123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      email: john@example.com
-      password: password123
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Logged in successfully",
-            "data": {
-              "token": "2|xxxxxxxxxxxxxxxxxxxxxxxx",
-              "user": {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john@example.com",
-                "plan": "free",
-                "credits_balance": 50
-              }
-            }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 401
-        content: |-
-          {
-            "success": false,
-            "message": "Invalid email or password",
-            "errors": null
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/v1/auth/logout
-    metadata:
-      custom: []
-      groupName: Authentication
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: Logout
-      description: |-
-        Invalidates the current Bearer token. The token cannot be
-        used again after this call. The user must login again to get a new token.
+        Cancels the authenticated user's active subscription.
+        Access continues until the end of the current billing period —
+        the user is not cut off immediately.
+        After the period ends, they are automatically downgraded to the free plan.
       authenticated: true
       deprecated: false
     headers:
@@ -600,17 +166,19 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Logged out successfully",
+            "message": "Subscription cancelled. Access continues until 2026-04-25.",
             "data": null
           }
         headers: []
         description: ''
       -
         custom: []
-        status: 401
+        status: 400
         content: |-
           {
-            "message": "Unauthenticated."
+            "success": false,
+            "message": "No active subscription to cancel",
+            "errors": null
           }
         headers: []
         description: ''

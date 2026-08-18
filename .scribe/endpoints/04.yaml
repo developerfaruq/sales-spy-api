@@ -1,76 +1,21 @@
-name: Plans
+name: 'Admin — Dashboard'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/plans
+    uri: api/v1/admin/metrics
     metadata:
       custom: []
-      groupName: Plans
+      groupName: 'Admin — Dashboard'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List all available plans'
+      title: 'Dashboard summary metrics'
       description: |-
-        Returns all active plans with prices and features.
-        Public endpoint — no authentication required.
-        The frontend uses this to populate the pricing page dynamically.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Plans retrieved successfully",
-            "data": [
-              {
-                "slug": "basic",
-                "name": "Basic",
-                "monthly_price_usd": 115.00,
-                "yearly_price_usd": 1104.00,
-                "monthly_quota": 500,
-                "features": ["500 leads per month", "Basic filtering options"],
-                "is_popular": false
-              }
-            ]
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/v1/user/subscription
-    metadata:
-      custom: []
-      groupName: Plans
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get current subscription'
-      description: |-
-        Returns the authenticated user's active subscription
-        including plan details, billing cycle, and period end date.
+        Aggregate counters for the admin dashboard landing page. Monetary values
+        are integer cents.
       authenticated: true
       deprecated: false
     headers:
@@ -91,36 +36,48 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Subscription retrieved successfully",
+            "message": "Metrics retrieved successfully",
             "data": {
-              "plan": {
-                "slug": "pro",
-                "name": "Pro",
-                "monthly_price_usd": 225.00,
-                "yearly_price_usd": 2160.00,
-                "monthly_quota": 2000,
-                "features": ["2,000 leads per month", "Priority support"],
-                "is_popular": true
+              "users": {
+                "total": 120,
+                "active": 118,
+                "inactive": 2,
+                "verified": 96,
+                "unverified": 24,
+                "new_last_30_days": 31
               },
-              "status": "active",
-              "billing_cycle": "monthly",
-              "current_period_end": "2026-04-25T00:00:00.000000Z",
-              "cancelled_at": null
+              "subscriptions": {
+                "active_by_plan": {"free": 90, "basic": 20, "pro": 8},
+                "by_status": {"active": 118, "cancelled": 4, "expired": 9}
+              },
+              "revenue": {
+                "approved_total_cents": 429900,
+                "approved_last_30_days_cents": 89900,
+                "orders_awaiting_verification": 3
+              },
+              "credits": {
+                "total_spent": 18420,
+                "total_refunded": 260,
+                "spent_last_30_days": 5310,
+                "outstanding_balance": 74250
+              },
+              "leads": {
+                "websites": 12840,
+                "websites_crawled": 11203,
+                "ecommerce_stores": 3180,
+                "products": 412903,
+                "deep_scans_completed": 92
+              }
             }
           }
         headers: []
-        description: 'Active subscription'
+        description: ''
       -
         custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "No active subscription found",
-            "data": null
-          }
+        status: 403
+        content: '{"success": false, "message": "Admin access required.", "errors": null}'
         headers: []
-        description: 'No subscription'
+        description: ''
     responseFields: []
     auth:
       - headers
@@ -132,20 +89,20 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/v1/user/subscription/cancel
+      - GET
+    uri: api/v1/admin/metrics/pipeline
     metadata:
       custom: []
-      groupName: Plans
+      groupName: 'Admin — Dashboard'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Cancel subscription'
+      title: 'Discovery pipeline status'
       description: |-
-        Cancels the authenticated user's active subscription.
-        Access continues until the end of the current billing period —
-        the user is not cut off immediately.
-        After the period ends, they are automatically downgraded to the free plan.
+        Operational view of the crawl and scan queues. Use this to confirm the
+        Python workers are running: a climbing `due_now` with a flat `completed`
+        count means Celery beat or the worker is down. A persistently non-zero
+        `stale_crawl_claims` means lease recovery is not running.
       authenticated: true
       deprecated: false
     headers:
@@ -166,20 +123,136 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Subscription cancelled. Access continues until 2026-04-25.",
-            "data": null
+            "message": "Pipeline status retrieved successfully",
+            "data": {
+              "websites_by_crawl_status": {"pending": 420, "crawling": 8, "completed": 11203, "failed": 190, "blocked": 12},
+              "scans_by_status": {"queued": 2, "running": 1, "completed": 92, "failed": 4},
+              "due_now": 420,
+              "stale_crawl_claims": 0,
+              "stale_scan_claims": 0,
+              "last_completed_crawl_at": "2026-08-16T17:42:10.000000Z"
+            }
           }
         headers: []
         description: ''
       -
         custom: []
-        status: 400
+        status: 403
+        content: '{"success": false, "message": "Admin access required.", "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/admin/activities
+    metadata:
+      custom: []
+      groupName: 'Admin — Dashboard'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Read the activity audit log'
+      description: |-
+        Paginated view of `user_activities` across all users, newest first.
+        Filterable by user and activity type.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'Page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Results per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      user_id:
+        custom: []
+        name: user_id
+        description: "Only this user's activity."
+        required: false
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      type:
+        custom: []
+        name: type
+        description: 'Only this activity type.'
+        required: false
+        example: password_reset_completed
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      user_id: 4
+      type: password_reset_completed
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
         content: |-
           {
-            "success": false,
-            "message": "No active subscription to cancel",
-            "errors": null
+            "success": true,
+            "message": "Activities retrieved successfully",
+            "data": [
+              {
+                "id": 918,
+                "user_id": 4,
+                "user_email": "john@example.com",
+                "type": "password_reset_completed",
+                "description": "Completed a password reset and signed out all sessions",
+                "ip_address": "203.0.113.9",
+                "metadata": null,
+                "created_at": "2026-08-16T17:12:44.000000Z"
+              }
+            ],
+            "meta": {"current_page": 1, "last_page": 12, "per_page": 25, "total": 288}
           }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"success": false, "message": "Admin access required.", "errors": null}'
         headers: []
         description: ''
     responseFields: []

@@ -6,8 +6,7 @@ use App\Models\User;
 use App\Notifications\VerifyEmailNotification;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Throwable;
+use Symfony\Component\Mailer\Exception\ExceptionInterface as MailerExceptionInterface;
 
 class EmailVerificationService
 {
@@ -31,7 +30,9 @@ class EmailVerificationService
 
         try {
             $user->notify(new VerifyEmailNotification);
-        } catch (TransportExceptionInterface|Throwable $exception) {
+        } catch (MailerExceptionInterface $exception) {
+            // Mailer exceptions only. A catch-all would hide configuration and
+            // programming faults behind a "could not send" response.
             report($exception);
 
             return false;

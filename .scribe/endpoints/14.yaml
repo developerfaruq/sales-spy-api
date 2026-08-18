@@ -1,19 +1,21 @@
-name: Security
+name: Credits
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/user/sessions
+    uri: api/v1/user/credits
     metadata:
       custom: []
-      groupName: Security
+      groupName: Credits
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List all active sessions for the authenticated user.'
-      description: ''
+      title: 'Get credit balance'
+      description: |-
+        Returns the authenticated user's current credit allowance, next reset
+        date, and the configured costs for credit-consuming actions.
       authenticated: true
       deprecated: false
     headers:
@@ -34,16 +36,14 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Sessions retrieved successfully",
-            "data": [
-              {
-                "id": 1,
-                "name": "auth-token",
-                "last_used_at": "2026-03-25T09:00:00.000000Z",
-                "created_at": "2026-03-24T08:00:00.000000Z",
-                "is_current": true
-              }
-            ]
+            "message": "Credit balance retrieved successfully",
+            "data": {
+              "balance": 50,
+              "monthly_quota": 50,
+              "unlimited": false,
+              "next_reset_at": "2026-09-05T12:00:00.000000Z",
+              "costs": {"website_access": 1, "search_result": 1, "export_row": 2, "deep_scan": 5}
+            }
           }
         headers: []
         description: ''
@@ -58,38 +58,82 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - DELETE
-    uri: 'api/v1/user/sessions/{sessionId}'
+      - GET
+    uri: api/v1/user/credits/history
     metadata:
       custom: []
-      groupName: Security
+      groupName: Credits
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Revoke a specific session by token ID.'
-      description: ''
+      title: 'Get credit transaction history'
+      description: |-
+        Returns the authenticated user's immutable credit ledger, newest first.
+        Results can be filtered by transaction type and date range.
       authenticated: true
       deprecated: false
     headers:
       Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters:
-      sessionId:
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      type:
         custom: []
-        name: sessionId
-        description: 'The token ID to revoke.'
-        required: true
-        example: 3
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
+        name: type
+        description: 'Filter transactions by type.'
+        required: false
+        example: spend
+        type: string
+        enumValues:
+          - opening_balance
+          - subscription_grant
+          - monthly_reset
+          - spend
+          - refund
+          - admin_adjustment
+        exampleWasSpecified: false
         nullable: false
         deprecated: false
-    cleanUrlParameters:
-      sessionId: 3
-    queryParameters: []
-    cleanQueryParameters: []
+      from:
+        custom: []
+        name: from
+        description: 'Include transactions on or after this date (YYYY-MM-DD). Must be a valid date in the format <code>Y-m-d</code>.'
+        required: false
+        example: '2026-08-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      to:
+        custom: []
+        name: to
+        description: 'Include transactions on or before this date (YYYY-MM-DD). Must be a valid date in the format <code>Y-m-d</code>. Must be a date after or equal to <code>from</code>.'
+        required: false
+        example: '2026-08-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Results per page. Maximum 100. Must be at least 1. Must not be greater than 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      type: spend
+      from: '2026-08-01'
+      to: '2026-08-31'
+      per_page: 25
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -100,65 +144,22 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Session revoked successfully",
-            "data": null
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 404
-        content: |-
-          {
-            "success": false,
-            "message": "Session not found",
-            "errors": null
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - DELETE
-    uri: api/v1/user/sessions
-    metadata:
-      custom: []
-      groupName: Security
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Revoke all sessions except the current one.'
-      description: ''
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "All other sessions revoked",
-            "data": null
+            "message": "Credit history retrieved successfully",
+            "data": [{
+              "id": 10,
+              "type": "spend",
+              "amount": -5,
+              "absolute_amount": 5,
+              "is_deduction": true,
+              "balance_before": 50,
+              "balance_after": 45,
+              "description": "Deep store scan",
+              "reference_type": "store_scan",
+              "reference_id": "42",
+              "metadata": null,
+              "created_at": "2026-08-05T12:00:00.000000Z"
+            }],
+            "meta": {"current_page": 1, "last_page": 1, "per_page": 25, "total": 1}
           }
         headers: []
         description: ''

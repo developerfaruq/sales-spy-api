@@ -1,189 +1,123 @@
-name: 'E-commerce Leads'
+name: OAuth
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/ecommerce
+    uri: 'api/v1/auth/{provider}/redirect'
     metadata:
       custom: []
-      groupName: 'E-commerce Leads'
+      groupName: OAuth
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List e-commerce leads'
-      description: ''
-      authenticated: true
+      title: 'OAuth Redirect'
+      description: |-
+        Redirects the user to the Google or GitHub login page.
+        Pass `google` or `github` as the provider parameter.
+        After the user authenticates, they are sent to the callback endpoint.
+      authenticated: false
       deprecated: false
     headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters:
-      q:
+    urlParameters:
+      provider:
         custom: []
-        name: q
-        description: 'Full-text search across store name, category, and platform. Must not be greater than 255 characters.'
-        required: false
-        example: fashion
+        name: provider
+        description: 'The OAuth provider. Accepted: google, github.'
+        required: true
+        example: google
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
-      country:
+    cleanUrlParameters:
+      provider: google
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
         custom: []
-        name: country
-        description: 'ISO 3166-1 alpha-2 country code. Must contain only letters. Must be 2 characters.'
-        required: false
-        example: US
+        status: 302
+        content: '{}'
+        headers: []
+        description: 'Redirects to provider login page'
+      -
+        custom: []
+        status: 302
+        content: |-
+          <!DOCTYPE html>
+          <html>
+              <head>
+                  <meta charset="UTF-8" />
+                  <meta http-equiv="refresh" content="0;url='https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code'" />
+
+                  <title>Redirecting to https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code</title>
+              </head>
+              <body>
+                  Redirecting to <a href="https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code">https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&amp;scope=openid+profile+email&amp;response_type=code</a>.
+              </body>
+          </html>
+        headers:
+          cache-control: 'no-cache, private'
+          location: 'https://accounts.google.com/o/oauth2/auth?client_id=443937939152-ss2vadirvcloddlmbj1093vqjk0djjbs.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&scope=openid+profile+email&response_type=code'
+          content-type: 'text/html; charset=utf-8'
+          x-ratelimit-limit: '20'
+          x-ratelimit-remaining: '19'
+          x-content-type-options: nosniff
+          x-frame-options: DENY
+          x-xss-protection: '1; mode=block'
+          referrer-policy: strict-origin-when-cross-origin
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/auth/{provider}/callback'
+    metadata:
+      custom: []
+      groupName: OAuth
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'OAuth Callback'
+      description: |-
+        Handles the response from Google or GitHub after the user authenticates.
+        Returns a Bearer token exactly like the login endpoint does.
+        The frontend should redirect here and extract the token from the response.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      provider:
+        custom: []
+        name: provider
+        description: 'The OAuth provider. Accepted: google, github.'
+        required: true
+        example: google
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
-      platform:
-        custom: []
-        name: platform
-        description: 'Commerce platform.'
-        required: false
-        example: shopify
-        type: string
-        enumValues:
-          - shopify
-          - woocommerce
-          - wix
-          - bigcommerce
-          - magento
-          - prestashop
-          - squarespace
-          - custom
-          - unknown
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      category:
-        custom: []
-        name: category
-        description: 'Exact store category. Must not be greater than 255 characters.'
-        required: false
-        example: Fashion
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      currency:
-        custom: []
-        name: currency
-        description: 'ISO 4217 currency code. Must contain only letters. Must be 3 characters.'
-        required: false
-        example: USD
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      min_products:
-        custom: []
-        name: min_products
-        description: 'Minimum product count. Must be at least 0.'
-        required: false
-        example: 10
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      max_products:
-        custom: []
-        name: max_products
-        description: 'Maximum product count. Must be at least 0.'
-        required: false
-        example: 5000
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      min_price:
-        custom: []
-        name: min_price
-        description: 'Minimum average product price in major currency units. Must be at least 0.'
-        required: false
-        example: 10.0
-        type: number
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      max_price:
-        custom: []
-        name: max_price
-        description: 'Maximum average product price in major currency units. Must be at least 0.'
-        required: false
-        example: 100.0
-        type: number
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      sort:
-        custom: []
-        name: sort
-        description: 'Sort field.'
-        required: false
-        example: product_count
-        type: string
-        enumValues:
-          - domain
-          - store_name
-          - product_count
-          - average_price
-          - last_seen_at
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      direction:
-        custom: []
-        name: direction
-        description: 'Sort direction.'
-        required: false
-        example: desc
-        type: string
-        enumValues:
-          - asc
-          - desc
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      per_page:
-        custom: []
-        name: per_page
-        description: 'Results per page. Maximum 100. Must be at least 1. Must not be greater than 100.'
-        required: false
-        example: 25
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      q: fashion
-      country: US
-      platform: shopify
-      category: Fashion
-      currency: USD
-      min_products: 10
-      max_products: 5000
-      min_price: 10.0
-      max_price: 100.0
-      sort: product_count
-      direction: desc
-      per_page: 25
+    cleanUrlParameters:
+      provider: google
+    queryParameters: []
+    cleanQueryParameters: []
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -191,400 +125,47 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"success":true,"message":"E-commerce leads retrieved successfully","data":[],"meta":{"current_page":1,"last_page":1,"per_page":25,"total":0,"charged_items":0,"credits_spent":0,"credits_balance":500}}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          x-ratelimit-limit: '120'
-          x-ratelimit-remaining: '119'
-          x-content-type-options: nosniff
-          x-frame-options: DENY
-          x-xss-protection: '1; mode=block'
-          referrer-policy: strict-origin-when-cross-origin
-          access-control-allow-origin: '*'
-        description: null
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: 'api/v1/ecommerce/{domain}'
-    metadata:
-      custom: []
-      groupName: 'E-commerce Leads'
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get e-commerce lead details'
-      description: ''
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      domain:
-        custom: []
-        name: domain
-        description: 'Canonical store domain.'
-        required: true
-        example: store.example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      domain: store.example.com
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
+        content: |-
+          {
+            "success": true,
+            "message": "OAuth login successful",
+            "data": {
+              "token": "3|xxxxxxxxxxxxxxxxxxxxxxxx",
+              "user": {
+                "id": 2,
+                "name": "Jane Doe",
+                "email": "jane@gmail.com",
+                "plan": "free",
+                "credits_balance": 50
+              }
+            }
+          }
+        headers: []
+        description: ''
       -
         custom: []
-        status: 404
-        content: '{"success":false,"message":"E-commerce lead not found.","errors":null}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          x-ratelimit-limit: '120'
-          x-ratelimit-remaining: '119'
-          x-content-type-options: nosniff
-          x-frame-options: DENY
-          x-xss-protection: '1; mode=block'
-          referrer-policy: strict-origin-when-cross-origin
-          access-control-allow-origin: '*'
-        description: null
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: 'api/v1/ecommerce/{domain}/products'
-    metadata:
-      custom: []
-      groupName: 'E-commerce Leads'
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'List store products'
-      description: 'Available on Basic, Pro, and Enterprise plans.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      domain:
-        custom: []
-        name: domain
-        description: 'Canonical store domain.'
-        required: true
-        example: store.example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      domain: store.example.com
-    queryParameters:
-      q:
-        custom: []
-        name: q
-        description: 'Full-text search across title, vendor, and product type. Must not be greater than 255 characters.'
-        required: false
-        example: 'running shoe'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      vendor:
-        custom: []
-        name: vendor
-        description: 'Exact product vendor. Must not be greater than 255 characters.'
-        required: false
-        example: Acme
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      type:
-        custom: []
-        name: type
-        description: 'Exact product type. Must not be greater than 255 characters.'
-        required: false
-        example: Shoes
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      status:
-        custom: []
-        name: status
-        description: 'Product status.'
-        required: false
-        example: active
-        type: string
-        enumValues:
-          - active
-          - draft
-          - archived
-          - unavailable
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      available:
-        custom: []
-        name: available
-        description: 'Filter currently available products.'
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      min_price:
-        custom: []
-        name: min_price
-        description: 'Minimum price in major currency units. Must be at least 0.'
-        required: false
-        example: 10.0
-        type: number
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      max_price:
-        custom: []
-        name: max_price
-        description: 'Maximum price in major currency units. Must be at least 0.'
-        required: false
-        example: 100.0
-        type: number
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      sort:
-        custom: []
-        name: sort
-        description: 'Sort field.'
-        required: false
-        example: price
-        type: string
-        enumValues:
-          - title
-          - price
-          - published_at
-          - last_seen_at
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      direction:
-        custom: []
-        name: direction
-        description: 'Sort direction.'
-        required: false
-        example: asc
-        type: string
-        enumValues:
-          - asc
-          - desc
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      per_page:
-        custom: []
-        name: per_page
-        description: 'Results per page. Maximum 100. Must be at least 1. Must not be greater than 100.'
-        required: false
-        example: 25
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      q: 'running shoe'
-      vendor: Acme
-      type: Shoes
-      status: active
-      available: true
-      min_price: 10.0
-      max_price: 100.0
-      sort: price
-      direction: asc
-      per_page: 25
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
+        status: 400
+        content: |-
+          {
+            "success": false,
+            "message": "Unsupported OAuth provider",
+            "errors": null
+          }
+        headers: []
+        description: ''
       -
         custom: []
-        status: 403
-        content: '{"success":false,"message":"Upgrade to Basic or higher to access store products.","errors":null}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          x-ratelimit-limit: '120'
-          x-ratelimit-remaining: '119'
-          x-content-type-options: nosniff
-          x-frame-options: DENY
-          x-xss-protection: '1; mode=block'
-          referrer-policy: strict-origin-when-cross-origin
-          access-control-allow-origin: '*'
-        description: null
+        status: 500
+        content: |-
+          {
+            "success": false,
+            "message": "OAuth authentication failed",
+            "errors": null
+          }
+        headers: []
+        description: ''
     responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: 'api/v1/ecommerce/{domain}/scan'
-    metadata:
-      custom: []
-      groupName: 'E-commerce Leads'
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Request a deep store scan'
-      description: 'Queues an idempotent Shopify catalog scan. Available on Pro and Enterprise.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      domain:
-        custom: []
-        name: domain
-        description: 'Canonical store domain.'
-        required: true
-        example: store.example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      domain: store.example.com
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      idempotency_key:
-        custom: []
-        name: idempotency_key
-        description: 'Client-generated key that makes scan submission repeat-safe for this user. Must match the regex /^[A-Za-z0-9._:-]+$/. Must be at least 16 characters. Must not be greater than 100 characters.'
-        required: true
-        example: scan-20260806-shop-example-001
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      idempotency_key: scan-20260806-shop-example-001
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: 'api/v1/user/scans/{scanRequestId}'
-    metadata:
-      custom: []
-      groupName: 'E-commerce Leads'
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get deep scan status'
-      description: |-
-        Returns only the authenticated user's scan request. Worker claims and raw
-        crawler errors are intentionally excluded.
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      scanRequestId:
-        custom: []
-        name: scanRequestId
-        description: 'Scan request ULID.'
-        required: true
-        example: architecto
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      scanRequestId: architecto
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 404
-        content: '{"success":false,"message":"Scan request not found.","errors":null}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          x-ratelimit-limit: '120'
-          x-ratelimit-remaining: '119'
-          x-content-type-options: nosniff
-          x-frame-options: DENY
-          x-xss-protection: '1; mode=block'
-          referrer-policy: strict-origin-when-cross-origin
-          access-control-allow-origin: '*'
-        description: null
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    auth: []
     controller: null
     method: null
     route: null

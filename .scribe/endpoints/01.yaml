@@ -1,21 +1,21 @@
-name: 'Admin - Payments'
+name: 'Admin — Plans'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/admin/payments
+    uri: api/v1/admin/plans
     metadata:
       custom: []
-      groupName: 'Admin - Payments'
+      groupName: 'Admin — Plans'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List payment orders'
+      title: 'List every plan'
       description: |-
-        Returns payment orders across all users, newest first. Results can be
-        filtered by status or plan and searched by payment or user details.
+        Includes inactive plans and subscriber counts, unlike the public
+        `GET /plans` endpoint which only returns active plans.
       authenticated: true
       deprecated: false
     headers:
@@ -24,61 +24,8 @@ endpoints:
       Accept: application/json
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters:
-      status:
-        custom: []
-        name: status
-        description: 'Filter by payment status.'
-        required: false
-        example: awaiting_verification
-        type: string
-        enumValues:
-          - pending
-          - awaiting_verification
-          - approved
-          - rejected
-          - expired
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      plan:
-        custom: []
-        name: plan
-        description: 'Filter by plan slug. Must match an existing stored value.'
-        required: false
-        example: pro
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      search:
-        custom: []
-        name: search
-        description: 'Search by order reference, TXID, user name, or user email. Must not be greater than 255 characters.'
-        required: false
-        example: SPY-2026
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      per_page:
-        custom: []
-        name: per_page
-        description: 'Results per page. Maximum 100. Must be at least 1. Must not be greater than 100.'
-        required: false
-        example: 25
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      status: awaiting_verification
-      plan: pro
-      search: SPY-2026
-      per_page: 25
+    queryParameters: []
+    cleanQueryParameters: []
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -89,26 +36,25 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Payment orders retrieved successfully",
-            "data": [{
-              "order_id": 42,
-              "reference": "SPY-2026-00042",
-              "user": {"id": 7, "name": "Jane Doe", "email": "jane@example.com"},
-              "plan": {"slug": "pro", "name": "Pro"},
-              "billing_cycle": "monthly",
-              "amount": 50,
-              "currency": "USDT",
-              "network": "TRC20",
-              "status": "awaiting_verification",
-              "txid": "a1b2c3d4e5f6",
-              "proof_image_url": "https://res.cloudinary.com/example/proof.png",
-              "reviewer": null,
-              "reviewed_at": null,
-              "rejection_reason": null,
-              "expires_at": "2026-08-06T12:00:00.000000Z",
-              "created_at": "2026-08-05T12:00:00.000000Z"
-            }],
-            "meta": {"current_page": 1, "last_page": 1, "per_page": 25, "total": 1}
+            "message": "Plans retrieved successfully",
+            "data": [
+              {
+                "id": 1,
+                "slug": "free",
+                "name": "Free",
+                "monthly_price_cents": 0,
+                "yearly_price_cents": 0,
+                "monthly_quota": 50,
+                "unlimited_credits": false,
+                "access_rank": 0,
+                "features": ["50 credits per month"],
+                "is_active": true,
+                "sort_order": 0,
+                "is_protected": true,
+                "subscriptions_count": 90,
+                "active_subscriptions_count": 88
+              }
+            ]
           }
         headers: []
         description: ''
@@ -129,19 +75,194 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - PUT
-    uri: 'api/v1/admin/payments/{orderId}/review'
+      - POST
+    uri: api/v1/admin/plans
     metadata:
       custom: []
-      groupName: 'Admin - Payments'
+      groupName: 'Admin — Plans'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Review a payment order'
+      title: 'Create a plan'
       description: |-
-        Approves or rejects an order awaiting verification. Approval activates
-        the purchased subscription and resets credits to the selected plan quota.
-        Each order can be reviewed only once.
+        `access_rank` decides what lead data the tier unlocks: 0 unlocks nothing
+        beyond basic listings, 1 unlocks contacts and products, 2 unlocks deep
+        scans. If omitted it defaults by slug for the four built-in tiers, and to 0
+        for any new slug — so set it explicitly on a new paid tier or subscribers
+        will get free-tier access.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      slug:
+        custom: []
+        name: slug
+        description: 'Unique plan identifier. Must match the regex /^[a-z][a-z0-9-]*$/. Must not be greater than 32 characters.'
+        required: true
+        example: growth
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      name:
+        custom: []
+        name: name
+        description: 'Display name. Must not be greater than 100 characters.'
+        required: true
+        example: Growth
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      monthly_price:
+        custom: []
+        name: monthly_price
+        description: 'Monthly price in cents. Must be at least 0.'
+        required: true
+        example: 4900
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      yearly_price:
+        custom: []
+        name: yearly_price
+        description: 'Yearly price in cents. Must be at least 0.'
+        required: true
+        example: 49000
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      monthly_quota:
+        custom: []
+        name: monthly_quota
+        description: 'Monthly credits, or -1 for unlimited. Must be at least -1.'
+        required: true
+        example: 1000
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      access_rank:
+        custom: []
+        name: access_rank
+        description: 'Lead access tier. 0 = no contacts or products, 1 = contacts and products, 2 = deep scans. Defaults by slug, or 0 for a new slug. Must be at least 0. Must not be greater than 255.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      features:
+        custom: []
+        name: features
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example:
+          - b
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      is_active:
+        custom: []
+        name: is_active
+        description: 'Whether the plan is publicly listed.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      sort_order:
+        custom: []
+        name: sort_order
+        description: 'Display order, ascending. Must be at least 0.'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      slug: growth
+      name: Growth
+      monthly_price: 4900
+      yearly_price: 49000
+      monthly_quota: 1000
+      access_rank: 1
+      features:
+        - b
+      is_active: true
+      sort_order: 2
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: |-
+          {
+            "success": true,
+            "message": "Plan created successfully",
+            "data": {"id": 5, "slug": "growth", "name": "Growth", "access_rank": 1}
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "success": false,
+            "message": "Validation failed",
+            "errors": {"slug": ["A plan with this slug already exists."]}
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/v1/admin/plans/{planId}'
+    metadata:
+      custom: []
+      groupName: 'Admin — Plans'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a plan'
+      description: |-
+        Send only the fields you want to change.
+
+        Changing `monthly_quota` does not alter what current subscribers already
+        hold — their balance was granted when they subscribed and is recalculated
+        on their next monthly reset. The free plan's slug cannot be changed because
+        registration resolves it by slug.
       authenticated: true
       deprecated: false
     headers:
@@ -149,49 +270,133 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      orderId:
+      planId:
         custom: []
-        name: orderId
-        description: 'The payment order ID.'
+        name: planId
+        description: 'The plan id.'
         required: true
-        example: 42
+        example: 2
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      orderId: 42
+      planId: 2
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      decision:
+      slug:
         custom: []
-        name: decision
-        description: 'The admin review decision. Accepted values: approved, rejected.'
-        required: true
-        example: approved
-        type: string
-        enumValues:
-          - approved
-          - rejected
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      rejection_reason:
-        custom: []
-        name: rejection_reason
-        description: 'Required when decision is rejected; prohibited when approved. Must not be greater than 1000 characters.'
+        name: slug
+        description: 'Must match the regex /^[a-z][a-z0-9-]*$/. Must not be greater than 32 characters.'
         required: false
-        example: 'The submitted TXID could not be verified on TronScan.'
+        example: b
         type: string
         enumValues: []
         exampleWasSpecified: false
-        nullable: true
+        nullable: false
+        deprecated: false
+      name:
+        custom: []
+        name: name
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: 'n'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      monthly_price:
+        custom: []
+        name: monthly_price
+        description: 'Must be at least 0.'
+        required: false
+        example: 84
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      yearly_price:
+        custom: []
+        name: yearly_price
+        description: 'Must be at least 0.'
+        required: false
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      monthly_quota:
+        custom: []
+        name: monthly_quota
+        description: 'Must be at least -1.'
+        required: false
+        example: 59
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      access_rank:
+        custom: []
+        name: access_rank
+        description: 'Must be at least 0. Must not be greater than 255.'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      features:
+        custom: []
+        name: features
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example:
+          - 'y'
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      is_active:
+        custom: []
+        name: is_active
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      sort_order:
+        custom: []
+        name: sort_order
+        description: 'Must be at least 0.'
+        required: false
+        example: 60
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
         deprecated: false
     cleanBodyParameters:
-      decision: approved
-      rejection_reason: 'The submitted TXID could not be verified on TronScan.'
+      slug: b
+      name: 'n'
+      monthly_price: 84
+      yearly_price: 12
+      monthly_quota: 59
+      access_rank: 15
+      features:
+        - 'y'
+      is_active: false
+      sort_order: 60
     fileParameters: []
     responses:
       -
@@ -200,38 +405,89 @@ endpoints:
         content: |-
           {
             "success": true,
-            "message": "Payment approved and subscription activated successfully",
-            "data": {"order_id": 42, "reference": "SPY-2026-00042", "status": "approved"}
+            "message": "Plan updated successfully",
+            "data": {"id": 2, "slug": "basic", "monthly_price_cents": 2900, "is_active": true}
           }
         headers: []
-        description: Approved
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "success": true,
-            "message": "Payment rejected successfully",
-            "data": {"order_id": 42, "reference": "SPY-2026-00042", "status": "rejected", "rejection_reason": "TXID could not be verified"}
-          }
-        headers: []
-        description: Rejected
+        description: ''
       -
         custom: []
         status: 404
-        content: '{"success": false, "message": "Payment order not found.", "errors": null}'
+        content: '{"success": false, "message": "Plan not found.", "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3|pTte1HuTDQNBzbKOjx1SR9wRKWgDkHBpivLX8bLv35e7cb84'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/admin/plans/{planId}'
+    metadata:
+      custom: []
+      groupName: 'Admin — Plans'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a plan'
+      description: |-
+        Refused with 409 when the plan is the free plan, or when any subscription
+        or payment order references it — deleting those would break registration or
+        orphan billing history. Deactivate the plan instead, which hides it from
+        the public list without affecting existing subscribers.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      planId:
+        custom: []
+        name: planId
+        description: 'The plan id.'
+        required: true
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      planId: 5
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Plan deleted successfully", "data": null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"success": false, "message": "Plan not found.", "errors": null}'
         headers: []
         description: ''
       -
         custom: []
         status: 409
-        content: '{"success": false, "message": "Only payments awaiting verification can be reviewed.", "errors": null}'
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: '{"success": false, "message": "Validation failed", "errors": {"rejection_reason": ["A rejection reason is required when rejecting a payment."]}}'
+        content: |-
+          {
+            "success": false,
+            "message": "This plan still has subscriptions. Deactivate it instead so existing subscribers are unaffected.",
+            "errors": null
+          }
         headers: []
         description: ''
     responseFields: []

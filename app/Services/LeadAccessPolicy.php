@@ -6,26 +6,32 @@ use App\Models\User;
 
 class LeadAccessPolicy
 {
-    private const RANKS = [
-        'free' => 0,
-        'basic' => 1,
-        'pro' => 2,
-        'enterprise' => 3,
-    ];
+    /**
+     * Minimum plan rank each capability requires.
+     *
+     * Ranks live on `plans.access_rank`, not in a slug map here. A slug map meant
+     * any plan an admin created outside free/basic/pro/enterprise silently fell
+     * through to free-tier access.
+     */
+    private const CONTACTS_RANK = 1;
+
+    private const PRODUCTS_RANK = 1;
+
+    private const DEEP_SCAN_RANK = 2;
 
     public function canViewContacts(User $user): bool
     {
-        return $this->rank($user) >= self::RANKS['basic'];
+        return $this->rank($user) >= self::CONTACTS_RANK;
     }
 
     public function canViewProducts(User $user): bool
     {
-        return $this->rank($user) >= self::RANKS['basic'];
+        return $this->rank($user) >= self::PRODUCTS_RANK;
     }
 
     public function canRequestDeepScan(User $user): bool
     {
-        return $this->rank($user) >= self::RANKS['pro'];
+        return $this->rank($user) >= self::DEEP_SCAN_RANK;
     }
 
     public function plan(User $user): string
@@ -33,8 +39,11 @@ class LeadAccessPolicy
         return $user->currentPlanSlug();
     }
 
+    /**
+     * A user with no active subscription gets rank 0, the same as the free plan.
+     */
     private function rank(User $user): int
     {
-        return self::RANKS[$this->plan($user)] ?? self::RANKS['free'];
+        return (int) ($user->activeSubscription?->plan?->access_rank ?? 0);
     }
 }

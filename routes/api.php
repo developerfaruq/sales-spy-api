@@ -4,6 +4,8 @@ use App\Http\Controllers\Admin\AdminActivityController;
 use App\Http\Controllers\Admin\AdminLeadController;
 use App\Http\Controllers\Admin\AdminMetricsController;
 use App\Http\Controllers\Admin\AdminPaymentController;
+use App\Http\Controllers\Admin\AdminPlanController;
+use App\Http\Controllers\Admin\AdminSettingController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\EmailVerificationController;
@@ -38,6 +40,24 @@ Route::prefix('v1')->group(function () {
             Route::get('/users', [AdminUserController::class, 'index']);
             Route::get('/users/{userId}', [AdminUserController::class, 'show']);
             Route::patch('/users/{userId}/toggle-status', [AdminUserController::class, 'toggleStatus']);
+            Route::delete('/users/{userId}', [AdminUserController::class, 'destroy'])->whereNumber('userId');
+            Route::post('/users/{userId}/restore', [AdminUserController::class, 'restore'])->whereNumber('userId');
+            Route::post('/users/{userId}/credits', [AdminUserController::class, 'adjustCredits'])->whereNumber('userId');
+
+            // Admin provisioning. The first admin is created out of band; after
+            // that, existing admins promote others here.
+            Route::post('/users/{userId}/admin', [AdminUserController::class, 'grantAdmin'])->whereNumber('userId');
+            Route::delete('/users/{userId}/admin', [AdminUserController::class, 'revokeAdmin'])->whereNumber('userId');
+
+            // Plans
+            Route::get('/plans', [AdminPlanController::class, 'index']);
+            Route::post('/plans', [AdminPlanController::class, 'store']);
+            Route::put('/plans/{planId}', [AdminPlanController::class, 'update'])->whereNumber('planId');
+            Route::delete('/plans/{planId}', [AdminPlanController::class, 'destroy'])->whereNumber('planId');
+
+            // Runtime settings
+            Route::get('/settings', [AdminSettingController::class, 'index']);
+            Route::put('/settings', [AdminSettingController::class, 'update']);
 
             Route::get('/payments', [AdminPaymentController::class, 'index']);
             Route::put('/payments/{orderId}/review', [AdminPaymentController::class, 'review'])

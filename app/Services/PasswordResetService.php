@@ -8,8 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Support\Timebox;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Throwable;
+use Symfony\Component\Mailer\Exception\ExceptionInterface as MailerExceptionInterface;
 
 class PasswordResetService
 {
@@ -52,9 +51,14 @@ class PasswordResetService
                 // Mail is sent synchronously inside the broker, so a transport
                 // error would otherwise escape as a 500 — and only ever for a
                 // registered address, which is exactly the leak this guards.
+                //
+                // Scoped to Symfony's mailer exceptions, NOT Throwable. A
+                // catch-all here once swallowed a TypeError from a null app key
+                // and reported success, hiding a broken deployment. Programming
+                // and configuration faults must still surface.
                 try {
                     $status = Password::sendResetLink(['email' => $email]);
-                } catch (TransportExceptionInterface|Throwable $exception) {
+                } catch (MailerExceptionInterface $exception) {
                     report($exception);
                     $status = self::SEND_FAILED;
                 }
